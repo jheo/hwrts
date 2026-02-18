@@ -2,6 +2,7 @@ package com.humanwrites.unit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.humanwrites.domain.ai.AiUsageTracker
 import com.humanwrites.domain.certificate.CertificateService
 import com.humanwrites.domain.certificate.SignatureService
 import io.kotest.core.spec.style.FunSpec
@@ -18,7 +19,8 @@ class CertificateServiceTest :
 
         val objectMapper: ObjectMapper = jacksonObjectMapper()
         val signatureService = mockk<SignatureService>()
-        val service = CertificateService(signatureService, objectMapper)
+        val aiUsageTracker = AiUsageTracker()
+        val service = CertificateService(signatureService, objectMapper, aiUsageTracker)
 
         test("shortHash generation produces 32-character hex string") {
             // Test via reflection since generateShortHash is private

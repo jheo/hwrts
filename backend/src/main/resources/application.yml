@@ -36,6 +36,11 @@ app:
     refresh-token-expiry: 604800000  # 7 days in ms
     cookie-domain: ${COOKIE_DOMAIN:localhost}
     secure-cookie: ${SECURE_COOKIE:false}
+  ai:
+    claude-api-key: ${CLAUDE_API_KEY:}
+    openai-api-key: ${OPENAI_API_KEY:}
+    default-provider: claude
+    rate-limit-per-minute: 20
   scoring:
     cv-min: 0.15
     cv-max: 0.60

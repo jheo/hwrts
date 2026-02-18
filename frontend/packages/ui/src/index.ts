@@ -21,6 +21,7 @@ export { InspectorHeader } from './organisms/Inspector/InspectorHeader';
 export type { InspectorTab } from './organisms/Inspector/InspectorHeader';
 export { InspectorTrigger } from './organisms/Inspector/InspectorTrigger';
 export { ReviewTab } from './organisms/Inspector/tabs/ReviewTab';
+export type { ReviewItem, ReviewTabProps } from './organisms/Inspector/tabs/ReviewTab';
 export { StatsTab } from './organisms/Inspector/tabs/StatsTab';
 export { SummaryTab } from './organisms/Inspector/tabs/SummaryTab';
 

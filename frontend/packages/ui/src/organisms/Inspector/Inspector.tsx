@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
 import { InspectorHeader, type InspectorTab } from './InspectorHeader';
+import type { ReviewItem } from './tabs/ReviewTab';
 import { ReviewTab } from './tabs/ReviewTab';
 import { StatsTab } from './tabs/StatsTab';
 import { SummaryTab } from './tabs/SummaryTab';
@@ -19,6 +20,11 @@ interface InspectorProps {
     readingTime: number;
     charCount: number;
   };
+  reviewItems?: ReviewItem[];
+  onReviewItemClick?: (item: ReviewItem) => void;
+  onReviewAccept?: (item: ReviewItem) => void;
+  onReviewIgnore?: (item: ReviewItem) => void;
+  isReviewLoading?: boolean;
 }
 
 export function Inspector({
@@ -27,6 +33,11 @@ export function Inspector({
   onTabChange,
   onClose,
   stats,
+  reviewItems,
+  onReviewItemClick,
+  onReviewAccept,
+  onReviewIgnore,
+  isReviewLoading,
 }: InspectorProps) {
   return (
     <AnimatePresence>
@@ -62,12 +73,24 @@ export function Inspector({
           </div>
 
           {/* Tab header */}
-          <InspectorHeader activeTab={activeTab} onTabChange={onTabChange} />
+          <InspectorHeader
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            reviewCount={reviewItems?.length}
+          />
 
           {/* Tab content */}
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'stats' && <StatsTab {...stats} />}
-            {activeTab === 'review' && <ReviewTab />}
+            {activeTab === 'review' && (
+              <ReviewTab
+                items={reviewItems}
+                onItemClick={onReviewItemClick}
+                onAccept={onReviewAccept}
+                onIgnore={onReviewIgnore}
+                isLoading={isReviewLoading}
+              />
+            )}
             {activeTab === 'summary' && <SummaryTab />}
           </div>
         </motion.aside>

@@ -111,3 +111,15 @@ _(특별한 시행착오 없이 완료)_
 - **문제**: `verifyCertificate`에서 잘못된 서명(예: reversed Base64)을 디코딩할 때 `IllegalArgumentException` 발생. `false` 대신 예외가 던져져 테스트 실패.
 - **해결**: `verifyCertificate` 전체를 `try-catch`로 감싸서 모든 예외를 `false`로 처리. 서명 검증은 실패 시 항상 false 반환이 올바른 동작.
 
+---
+
+## Phase 2-4: AI 맞춤법 + 인라인 피드백
+
+### 1. TipTap declare module 타입 확장과 pnpm strict mode
+- **문제**: `declare module '@tiptap/core'`로 커스텀 커맨드를 추가하려면 해당 모듈이 직접 의존성이어야 함. pnpm strict mode에서 간접 의존성은 타입 해석 불가.
+- **해결**: `@tiptap/core`를 editor-react 패키지의 직접 dependency로 추가. `@tiptap/react`가 이미 이를 포함하지만 pnpm hoisting 정책 때문에 명시적 선언 필요.
+
+### 2. 병렬 에이전트 간 파일 충돌
+- **문제**: 프론트엔드 2개 에이전트가 동시에 작업할 때, 한 에이전트의 pnpm install이 다른 에이전트의 type-check를 실패시킴.
+- **해결**: 최종 통합 검증을 별도로 수행. 에이전트 간 공유 파일(package.json, pnpm-lock.yaml)이 있으면 순차 실행 고려.
+

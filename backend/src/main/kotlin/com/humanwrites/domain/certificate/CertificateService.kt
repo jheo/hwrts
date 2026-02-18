@@ -1,6 +1,7 @@
 package com.humanwrites.domain.certificate
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.humanwrites.domain.ai.AiUsageTracker
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -17,6 +18,7 @@ import java.util.UUID
 class CertificateService(
     private val signatureService: SignatureService,
     private val objectMapper: ObjectMapper,
+    private val aiUsageTracker: AiUsageTracker,
 ) {
     fun issueCertificate(
         documentId: UUID,
@@ -66,14 +68,15 @@ class CertificateService(
                 ),
             )
 
+        val aiUsage = aiUsageTracker.getAiUsageData(documentId)
         val aiUsageData =
             objectMapper.writeValueAsString(
                 mapOf(
-                    "enabled" to false,
-                    "features_used" to emptyList<String>(),
-                    "suggestions_accepted" to 0,
-                    "suggestions_rejected" to 0,
-                    "total_suggestions" to 0,
+                    "enabled" to aiUsage.enabled,
+                    "features_used" to aiUsage.featuresUsed,
+                    "suggestions_accepted" to aiUsage.suggestionsAccepted,
+                    "suggestions_rejected" to aiUsage.suggestionsRejected,
+                    "total_suggestions" to aiUsage.totalSuggestions,
                 ),
             )
 
@@ -124,7 +127,14 @@ class CertificateService(
                             pausePatternEntropy = pausePatternEntropy,
                         ),
                 ),
-            aiAssistance = AiAssistanceInfo(),
+            aiAssistance =
+                AiAssistanceInfo(
+                    enabled = aiUsage.enabled,
+                    featuresUsed = aiUsage.featuresUsed,
+                    suggestionsAccepted = aiUsage.suggestionsAccepted,
+                    suggestionsRejected = aiUsage.suggestionsRejected,
+                    totalSuggestions = aiUsage.totalSuggestions,
+                ),
             meta =
                 MetaInfo(
                     issuedAt = issuedAt.toString(),

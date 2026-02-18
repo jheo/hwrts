@@ -13,3 +13,8 @@ app:
     refresh-token-expiry: 604800000
     cookie-domain: localhost
     secure-cookie: false
+  ai:
+    claude-api-key: ""
+    openai-api-key: ""
+    default-provider: claude
+    rate-limit-per-minute: 20
