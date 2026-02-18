@@ -81,3 +81,33 @@
 - **문제**: 서브 패키지(core, ui)에 별도 `pnpm-lock.yaml` 존재 시 경고 발생.
 - **해결**: 루트 `pnpm-lock.yaml`만 유지, 서브 패키지의 lockfile 삭제.
 
+---
+
+## Phase 2-1: Spring Boot REST API + Google OAuth
+
+_(특별한 시행착오 없이 완료)_
+
+---
+
+## Phase 2-2: OpenAPI 파이프라인 + 키스트로크 분석 알고리즘
+
+### 1. Shannon 엔트로피 -0.0 비교 실패
+- **문제**: `calculateShannonEntropy`가 단일 버킷(모든 값 동일)일 때 `-0.0` 반환. Kotest `shouldBe 0.0`은 `(-0.0).equals(0.0) == false`라서 실패.
+- **해결**: `shouldBe (0.0 plusOrMinus 1e-10)` 사용하여 부동소수점 허용 오차 적용.
+
+### 2. AnomalyDetector 정상 윈도우 오탐 (MECHANICAL_RHYTHM)
+- **문제**: 테스트 normalWindows의 flightTimes가 80~200ms 범위에 집중되어 50ms 버킷 기준 3~4개 버킷만 사용. 엔트로피 ~1.74 < 2.0 임계값 → MECHANICAL_RHYTHM 오탐 발생.
+- **해결**: flightTimes를 45~500ms 범위로 넓혀 다양한 버킷에 분산되도록 수정. 실제 사람 타이핑은 이 정도 변동이 자연스러움.
+
+### 3. Exposed ORM timestamptz 미지원
+- **문제**: `exposed-java-time`에 `timestamptz` 함수가 없음. Kotlin Exposed는 `timestamp`만 제공.
+- **해결**: `timestamp` 사용. PostgreSQL에서 `TIMESTAMP WITH TIME ZONE`이 필요하면 SQL 마이그레이션에서 직접 지정.
+
+---
+
+## Phase 2-3: 인증서 (Ed25519) + 검증 페이지
+
+### 1. Ed25519 서명 검증 시 Base64 디코딩 예외
+- **문제**: `verifyCertificate`에서 잘못된 서명(예: reversed Base64)을 디코딩할 때 `IllegalArgumentException` 발생. `false` 대신 예외가 던져져 테스트 실패.
+- **해결**: `verifyCertificate` 전체를 `try-catch`로 감싸서 모든 예외를 `false`로 처리. 서명 검증은 실패 시 항상 false 반환이 올바른 동작.
+

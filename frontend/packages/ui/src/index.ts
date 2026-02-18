@@ -10,6 +10,12 @@ export { RecordingIndicator } from './molecules/RecordingIndicator/RecordingIndi
 export { StatItem } from './molecules/StatItem/StatItem';
 
 // Organisms
+export { CertificateModal } from './organisms/CertificateModal/CertificateModal';
+export type {
+  CertificateData,
+  CertificateModalProps,
+  CertificateStep,
+} from './organisms/CertificateModal/CertificateModal';
 export { Inspector } from './organisms/Inspector/Inspector';
 export { InspectorHeader } from './organisms/Inspector/InspectorHeader';
 export type { InspectorTab } from './organisms/Inspector/InspectorHeader';
