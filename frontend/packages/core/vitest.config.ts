@@ -1,17 +1,15 @@
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [react()],
   test: {
-    environment: 'jsdom',
+    environment: 'node',
     globals: true,
-    setupFiles: ['./src/__tests__/setup.ts'],
+    setupFiles: ['fake-indexeddb/auto'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/__tests__/**', 'src/extensions/heading.ts', 'src/extensions/blockquote.ts', 'src/index.ts'],
+      include: ['src/**/*.ts'],
+      exclude: ['src/__tests__/**'],
       thresholds: {
         statements: 70,
         branches: 70,

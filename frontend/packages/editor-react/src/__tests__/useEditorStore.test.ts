@@ -11,6 +11,7 @@ describe('useEditorStore', () => {
       result.current.setTitle('');
       result.current.updateStats(0, 0, 0);
       result.current.markClean();
+      result.current.setFocusMode('off');
     });
   });
 
@@ -72,5 +73,36 @@ describe('useEditorStore', () => {
     expect(result.current.isDirty).toBe(false);
     expect(result.current.lastSavedAt).toBeTypeOf('number');
     expect(result.current.lastSavedAt).toBeGreaterThan(0);
+  });
+
+  it('has focusMode off by default', () => {
+    const { result } = renderHook(() => useEditorStore());
+    expect(result.current.focusMode).toBe('off');
+  });
+
+  it('sets focus mode', () => {
+    const { result } = renderHook(() => useEditorStore());
+
+    act(() => {
+      result.current.setFocusMode('soft');
+    });
+
+    expect(result.current.focusMode).toBe('soft');
+  });
+
+  it('toggles focus mode off → soft → off', () => {
+    const { result } = renderHook(() => useEditorStore());
+
+    expect(result.current.focusMode).toBe('off');
+
+    act(() => {
+      result.current.toggleFocusMode();
+    });
+    expect(result.current.focusMode).toBe('soft');
+
+    act(() => {
+      result.current.toggleFocusMode();
+    });
+    expect(result.current.focusMode).toBe('off');
   });
 });

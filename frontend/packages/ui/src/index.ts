@@ -4,3 +4,7 @@ export { IconButton } from './atoms/IconButton';
 export { Toggle } from './atoms/Toggle';
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './atoms/Tooltip';
 export { cn } from './lib/cn';
+
+// Theme
+export { ThemeProvider, useTheme } from './theme-provider';
+export type { Theme, ThemeMode } from './theme-provider';

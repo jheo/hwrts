@@ -21,7 +21,7 @@
 |------|------|------|---------|------|
 | Phase 1-1 | Week 1 | 프로젝트 셋업 (모노레포, Spring Boot, Docker, CI) | [phase-1-1-setup.md](./phase-1-1-setup.md) | ✅ |
 | Phase 1-2 | Week 2 | TipTap v2 에디터 코어 (리치 텍스트, Markdown) | [phase-1-2-editor-core.md](./phase-1-2-editor-core.md) | ✅ |
-| Phase 1-3 | Week 3 | 에디터 UX (단락 포커스, 테마, 자동 저장) | [phase-1-3-editor-ux.md](./phase-1-3-editor-ux.md) | ⬜ |
+| Phase 1-3 | Week 3 | 에디터 UX (단락 포커스, 테마, 자동 저장) | [phase-1-3-editor-ux.md](./phase-1-3-editor-ux.md) | ✅ |
 | Phase 1-4 | Week 4 | Inspector 패널 + 문서 통계 | [phase-1-4-inspector.md](./phase-1-4-inspector.md) | ⬜ |
 | Phase 1-5 | Week 5 | 키스트로크 수집 + 파일럿 검증 | [phase-1-5-keystroke.md](./phase-1-5-keystroke.md) | ⬜ |
 | Phase 2-1 | Week 6 | Spring Boot REST API + Google OAuth | [phase-2-1-backend-api.md](./phase-2-1-backend-api.md) | ⬜ |

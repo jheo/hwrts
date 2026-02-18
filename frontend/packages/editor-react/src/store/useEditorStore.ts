@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+export type FocusModeState = 'off' | 'soft';
+
 export interface EditorState {
   title: string;
   wordCount: number;
@@ -7,6 +9,7 @@ export interface EditorState {
   paragraphCount: number;
   isDirty: boolean;
   lastSavedAt: number | null;
+  focusMode: FocusModeState;
 }
 
 export interface EditorActions {
@@ -18,6 +21,8 @@ export interface EditorActions {
   ) => void;
   markDirty: () => void;
   markClean: () => void;
+  setFocusMode: (mode: FocusModeState) => void;
+  toggleFocusMode: () => void;
 }
 
 export const useEditorStore = create<EditorState & EditorActions>((set) => ({
@@ -27,6 +32,7 @@ export const useEditorStore = create<EditorState & EditorActions>((set) => ({
   paragraphCount: 0,
   isDirty: false,
   lastSavedAt: null,
+  focusMode: 'off',
 
   setTitle: (title) => set({ title, isDirty: true }),
 
@@ -36,4 +42,11 @@ export const useEditorStore = create<EditorState & EditorActions>((set) => ({
   markDirty: () => set({ isDirty: true }),
 
   markClean: () => set({ isDirty: false, lastSavedAt: Date.now() }),
+
+  setFocusMode: (focusMode) => set({ focusMode }),
+
+  toggleFocusMode: () =>
+    set((state) => ({
+      focusMode: state.focusMode === 'off' ? 'soft' : 'off',
+    })),
 }));

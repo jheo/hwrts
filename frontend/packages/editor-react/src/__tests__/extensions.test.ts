@@ -9,17 +9,17 @@ describe('createExtensions', () => {
     expect(extensions.length).toBeGreaterThan(0);
   });
 
-  it('includes StarterKit, Link, and Placeholder extensions', () => {
+  it('includes all expected extensions', () => {
     const extensions = createExtensions();
 
-    // Extensions should contain at minimum 3 items (StarterKit, Link, Placeholder)
-    expect(extensions.length).toBe(3);
+    // StarterKit, Link, ParagraphFocus, FocusMode, Placeholder
+    expect(extensions.length).toBe(5);
   });
 
   it('accepts custom placeholder text', () => {
     const extensions = createExtensions({ placeholder: 'Custom placeholder' });
     expect(Array.isArray(extensions)).toBe(true);
-    expect(extensions.length).toBe(3);
+    expect(extensions.length).toBe(5);
   });
 
   it('uses default Korean placeholder when none provided', () => {

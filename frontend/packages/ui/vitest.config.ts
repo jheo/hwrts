@@ -11,7 +11,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/__tests__/**', 'src/extensions/heading.ts', 'src/extensions/blockquote.ts', 'src/index.ts'],
+      exclude: ['src/__tests__/**', 'src/atoms/**'],
       thresholds: {
         statements: 70,
         branches: 70,

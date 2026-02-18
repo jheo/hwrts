@@ -109,3 +109,45 @@
   background: var(--accent-primary);
   color: var(--accent-primary-text);
 }
+
+/* ============================================
+   Paragraph Focus System
+   ============================================ */
+
+/* Default: all paragraphs have active color (handled by .tiptap color) */
+
+/* Inactive paragraphs dimmed */
+.tiptap .paragraph-inactive {
+  color: var(--text-body);
+  transition: color 400ms ease, opacity 400ms ease;
+}
+
+/* Active paragraph (no .paragraph-inactive class) */
+.tiptap p:not(.paragraph-inactive),
+.tiptap blockquote:not(.paragraph-inactive) {
+  transition: color 400ms ease, opacity 400ms ease;
+}
+
+/* ============================================
+   Focus Mode Soft
+   ============================================ */
+
+/* Focus mode: inactive paragraphs become more transparent */
+.focus-mode-soft .tiptap .paragraph-inactive {
+  opacity: 0.4;
+}
+
+/* ============================================
+   Theme Transition
+   ============================================ */
+
+body {
+  transition: background-color 500ms ease, color 500ms ease;
+}
+
+/* Save status indicator */
+.save-status {
+  font-size: 0.75rem;
+  color: var(--text-quaternary);
+  transition: opacity 300ms ease;
+}

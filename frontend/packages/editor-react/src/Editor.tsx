@@ -1,16 +1,19 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { EditorContent, useEditor } from '@tiptap/react';
 import DOMPurify from 'dompurify';
+import { useMemo } from 'react';
 
 import { EditorProvider } from './EditorProvider';
 import { createExtensions } from './extensions';
+import { useAutoSave, type AutoSaveOptions } from './hooks/useAutoSave';
 import { useEditorState } from './hooks/useEditorState';
 
 export interface EditorProps {
   content?: string;
   placeholder?: string;
   onUpdate?: (html: string) => void;
+  autoSaveOptions?: AutoSaveOptions;
 }
 
 const ALLOWED_TAGS = [
@@ -40,11 +43,27 @@ function sanitize(html: string): string {
   });
 }
 
-export function Editor({ content, placeholder, onUpdate }: EditorProps) {
+const noopAutoSave: AutoSaveOptions = {
+  documentId: '',
+  save: async () => {},
+  load: async () => undefined,
+};
+
+export function Editor({
+  content,
+  placeholder,
+  onUpdate,
+  autoSaveOptions,
+}: EditorProps) {
   const sanitizedContent = content ? sanitize(content) : undefined;
 
+  const extensions = useMemo(
+    () => createExtensions({ placeholder }),
+    [placeholder],
+  );
+
   const editor = useEditor({
-    extensions: createExtensions({ placeholder }),
+    extensions,
     content: sanitizedContent,
     editorProps: {
       attributes: {
@@ -61,6 +80,12 @@ export function Editor({ content, placeholder, onUpdate }: EditorProps) {
 
   // Connect editor updates to Zustand store
   useEditorState(editor);
+
+  // Auto-save to IndexedDB (always called, noop when no options)
+  useAutoSave(
+    autoSaveOptions ? editor : null,
+    autoSaveOptions ?? noopAutoSave,
+  );
 
   return (
     <EditorProvider editor={editor}>
