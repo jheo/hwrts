@@ -1,24 +1,15 @@
 spring:
   datasource:
-    url: jdbc:tc:postgresql:16:///humanwrites
+    url: jdbc:tc:postgresql:16-alpine:///humanwrites?TC_TMPFS=/testtmpfs:rw
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: test-client-id
-            client-secret: test-client-secret
-
-logging:
-  level:
-    com.humanwrites: DEBUG
+app:
+  jwt:
+    secret: test-secret-key-that-is-at-least-256-bits-long-for-hs256-algorithm
+    access-token-expiry: 900000
+    refresh-token-expiry: 604800000
+    cookie-domain: localhost
+    secure-cookie: false

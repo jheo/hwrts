@@ -28,3 +28,11 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:default-dev-secret-must-be-at-least-256-bits-long-for-hs256}
+    access-token-expiry: 900000   # 15 minutes in ms
+    refresh-token-expiry: 604800000  # 7 days in ms
+    cookie-domain: ${COOKIE_DOMAIN:localhost}
+    secure-cookie: ${SECURE_COOKIE:false}

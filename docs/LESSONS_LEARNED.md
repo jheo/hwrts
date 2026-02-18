@@ -21,3 +21,63 @@
 - **문제**: `brew install --cask docker` (Docker Desktop)가 sudo 권한 필요로 비대화형 환경에서 설치 실패.
 - **해결**: `brew install docker docker-compose colima`로 경량 Docker 런타임 사용. `colima start`로 시작.
 
+---
+
+## Phase 1-2: TipTap v2 에디터 코어
+
+### 1. TipTap 확장 간 의존성 순서
+- **문제**: TipTap 커스텀 확장 등록 순서에 따라 ProseMirror 플러그인 우선순위가 달라짐.
+- **해결**: `StarterKit` → 커스텀 확장 → `Placeholder` 순서로 등록. 테스트에서 동일 순서 보장.
+
+### 2. 한국어 IME 조합 상태 처리
+- **문제**: 한글 입력 시 `compositionstart`/`compositionend` 이벤트와 `keydown` 이벤트가 중복 발생.
+- **해결**: `isComposing` 플래그로 조합 중 keydown 이벤트 무시. 조합 완료 시점에만 이벤트 처리.
+
+---
+
+## Phase 1-3: 에디터 UX
+
+### 1. CSS Variables + Tailwind v4 통합
+- **문제**: Tailwind v4에서 CSS 커스텀 프로퍼티를 직접 클래스로 사용하는 방식이 v3와 다름.
+- **해결**: `text-[var(--text-active)]` 형태로 arbitrary value 사용. `@theme` 디렉티브에서 변수 등록.
+
+### 2. 자동저장 디바운스 타이밍
+- **문제**: 자동저장 간격이 너무 짧으면 IndexedDB 쓰기 부하, 너무 길면 데이터 유실 위험.
+- **해결**: 2초 디바운스 + `visibilitychange`/`beforeunload` 이벤트에서 즉시 저장.
+
+---
+
+## Phase 1-4: Inspector 패널 + 문서 통계
+
+### 1. Zustand 스토어와 TipTap 에디터 동기화
+- **문제**: TipTap의 `onUpdate` 콜백에서 Zustand 상태를 직접 업데이트하면 렌더링 루프 발생 가능.
+- **해결**: `requestAnimationFrame`으로 상태 업데이트를 다음 프레임으로 지연. 에디터 트랜잭션 완료 후 동기화.
+
+### 2. 읽기 시간 계산의 다국어 차이
+- **문제**: 한국어와 영어의 분당 읽기 속도(WPM)가 다름 (영어 ~200WPM, 한국어 ~500자/분).
+- **해결**: 언어 감지 후 적절한 WPM 상수 적용. MVP에서는 단어 수 기반 200WPM 기본값 사용.
+
+---
+
+## Phase 1-5: 키스트로크 수집 + 파일럿 검증
+
+### 1. Core 패키지 Node 환경에서 DOM 테스트
+- **문제**: `@humanwrites/core`는 vitest `environment: 'node'`로 설정되어 `document`, `window` 객체 없음. BeaconSender 테스트 실패.
+- **해결**: `(globalThis as any).document = { addEventListener: vi.fn(), ... }` 형태로 최소 DOM 스텁 제공.
+
+### 2. Web Worker 타입 충돌
+- **문제**: `DedicatedWorkerGlobalScope` 타입이 `webworker` lib 필요. 이를 추가하면 DOM 타입과 충돌.
+- **해결**: `DedicatedWorkerGlobalScope` 캐스팅 대신 `self.onmessage` 직접 사용. 타입은 `MessageEvent<T>`로 제한.
+
+### 3. ESLint import-x/order 규칙
+- **문제**: 외부 패키지 → 내부 모듈 간 빈 줄 필요. value import → type import 순서 필요.
+- **해결**: 모든 파일에서 import 그룹 사이 빈 줄 추가, type import를 별도 그룹으로 분리.
+
+### 4. 병렬 Bash 명령 실패 시 세션 블로킹
+- **문제**: 여러 Bash 명령을 병렬 실행할 때 하나가 실패하면 나머지도 "Sibling tool call errored"로 취소되어 세션이 멈춤.
+- **해결**: 실패 가능성 있는 명령은 순차 실행 (`;`로 체이닝). 병렬은 성공 보장 명령에만 사용.
+
+### 5. pnpm-lock.yaml 중복
+- **문제**: 서브 패키지(core, ui)에 별도 `pnpm-lock.yaml` 존재 시 경고 발생.
+- **해결**: 루트 `pnpm-lock.yaml`만 유지, 서브 패키지의 lockfile 삭제.
+
