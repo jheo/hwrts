@@ -1,5 +1,7 @@
 package com.humanwrites.unit
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.humanwrites.config.AiConfig
 import com.humanwrites.domain.ai.AiGatewayService
 import com.humanwrites.domain.ai.AiProvider
@@ -16,6 +18,8 @@ import java.util.UUID
 
 class AiGatewayServiceTest :
     FunSpec({
+
+        val objectMapper: ObjectMapper = jacksonObjectMapper()
 
         val aiConfig =
             AiConfig(
@@ -51,7 +55,7 @@ class AiGatewayServiceTest :
 
             every { mockProvider.analyzeSpelling("Helo world", "en") } returns expectedItems
 
-            val service = AiGatewayService(providerRouter, aiConfig)
+            val service = AiGatewayService(providerRouter, aiConfig, objectMapper)
             val result = service.analyzeSpelling("Helo world", "en", UUID.randomUUID())
 
             result shouldHaveSize 1
@@ -65,7 +69,7 @@ class AiGatewayServiceTest :
                 mockProvider.analyzeSpelling(any(), any())
             } throws RuntimeException("API down")
 
-            val service = AiGatewayService(providerRouter, aiConfig)
+            val service = AiGatewayService(providerRouter, aiConfig, objectMapper)
             val result = service.analyzeSpelling("Some text", "en", UUID.randomUUID())
 
             result.shouldBeEmpty()
@@ -78,7 +82,7 @@ class AiGatewayServiceTest :
                         IllegalStateException("No providers configured")
                 }
 
-            val service = AiGatewayService(failingRouter, aiConfig)
+            val service = AiGatewayService(failingRouter, aiConfig, objectMapper)
             val result = service.analyzeSpelling("Some text", "en", UUID.randomUUID())
 
             result.shouldBeEmpty()
@@ -103,7 +107,7 @@ class AiGatewayServiceTest :
                     ),
                 )
 
-            val service = AiGatewayService(providerRouter, limitedConfig)
+            val service = AiGatewayService(providerRouter, limitedConfig, objectMapper)
             val userId = UUID.randomUUID()
 
             // First two requests should succeed
@@ -138,7 +142,7 @@ class AiGatewayServiceTest :
                     every { getProvider("openai") } returns openAiProvider
                 }
 
-            val service = AiGatewayService(routerWithOpenAi, aiConfig)
+            val service = AiGatewayService(routerWithOpenAi, aiConfig, objectMapper)
             val result =
                 service.analyzeSpelling(
                     "text",

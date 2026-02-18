@@ -267,7 +267,15 @@ class CertificateIntegrationTest :
 
         test("shortHash in certificate response is 32 hex characters") {
             // Test the hash format that CertificateService produces via reflection
-            val service = CertificateService(signatureService, objectMapper, aiUsageTracker)
+            val service =
+                CertificateService(
+                    signatureService,
+                    objectMapper,
+                    aiUsageTracker,
+                    scoringService,
+                    keystrokeAnalyzer,
+                    null,
+                )
             val method =
                 CertificateService::class.java.getDeclaredMethod("generateShortHash", UUID::class.java)
             method.isAccessible = true

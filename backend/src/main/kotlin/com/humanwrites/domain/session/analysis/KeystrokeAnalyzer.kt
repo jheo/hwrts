@@ -1,13 +1,14 @@
 package com.humanwrites.domain.session.analysis
 
+import org.springframework.stereotype.Component
 import kotlin.math.ln
 import kotlin.math.sqrt
 
 /**
  * Layer 1 keystroke dynamics analysis engine.
  * Calculates human-likeness metrics from typing patterns.
- * Pure domain logic - no Spring or persistence dependencies.
  */
+@Component
 data class KeystrokeMetrics(
     val avgWpm: Double,
     val wpmVariance: Double,

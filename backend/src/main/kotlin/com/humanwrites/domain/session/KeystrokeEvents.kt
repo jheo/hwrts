@@ -11,5 +11,5 @@ object KeystrokeEvents : Table("keystroke_events") {
     val timestampMs = long("timestamp_ms")
     val dwellTimeMs = integer("dwell_time_ms").nullable()
     val flightTimeMs = integer("flight_time_ms").nullable()
-    val createdAt = timestamp("created_at")
+    val time = timestamp("time")
 }

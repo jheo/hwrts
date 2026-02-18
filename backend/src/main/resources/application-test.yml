@@ -5,6 +5,14 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  data:
+    redis:
+      host: localhost
+      port: 0
+  cache:
+    type: none
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
 
 app:
   jwt:

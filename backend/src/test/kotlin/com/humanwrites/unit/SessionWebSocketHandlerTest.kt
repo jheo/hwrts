@@ -1,5 +1,7 @@
 package com.humanwrites.unit
 
+import com.humanwrites.domain.session.analysis.AnomalyDetector
+import com.humanwrites.infrastructure.persistence.KeystrokeRepository
 import com.humanwrites.presentation.dto.request.KeystrokeBatchMessage
 import com.humanwrites.presentation.dto.request.KeystrokeEventDto
 import com.humanwrites.presentation.dto.request.SessionStartRequest
@@ -20,12 +22,16 @@ class SessionWebSocketHandlerTest :
     FunSpec({
 
         lateinit var messagingTemplate: SimpMessagingTemplate
+        lateinit var keystrokeRepository: KeystrokeRepository
+        lateinit var anomalyDetector: AnomalyDetector
         lateinit var handler: SessionWebSocketHandler
         lateinit var principal: Principal
 
         beforeEach {
             messagingTemplate = mockk(relaxed = true)
-            handler = SessionWebSocketHandler(messagingTemplate)
+            keystrokeRepository = mockk(relaxed = true)
+            anomalyDetector = AnomalyDetector()
+            handler = SessionWebSocketHandler(messagingTemplate, keystrokeRepository, anomalyDetector)
             principal = mockk()
             every { principal.name } returns "user-123"
         }
@@ -102,6 +108,37 @@ class SessionWebSocketHandlerTest :
             statusSlot.captured.sessionId shouldBe sessionId
             statusSlot.captured.status shouldBe "active"
             statusSlot.captured.totalKeystrokes shouldBe 2
+        }
+
+        test("handleKeystrokeBatch persists events via repository") {
+            val docId = UUID.randomUUID()
+            handler.handleSessionStart(SessionStartRequest(documentId = docId), principal)
+
+            val startPayloadSlot = slot<SessionStartResponse>()
+            verify {
+                messagingTemplate.convertAndSendToUser(any(), any(), capture(startPayloadSlot))
+            }
+            val sessionId = startPayloadSlot.captured.sessionId
+
+            val events =
+                listOf(
+                    KeystrokeEventDto(
+                        eventType = "keydown",
+                        keyCategory = "letter",
+                        timestampMs = 1000L,
+                        dwellTimeMs = 80,
+                        flightTimeMs = 120,
+                    ),
+                )
+
+            handler.handleKeystrokeBatch(
+                KeystrokeBatchMessage(sessionId = sessionId, events = events),
+                principal,
+            )
+
+            verify {
+                keystrokeRepository.batchInsert(sessionId, events)
+            }
         }
 
         test("handleKeystrokeBatch ignores unknown session") {

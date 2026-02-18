@@ -28,6 +28,7 @@ data class KeystrokeDynamicsScore(
     val pausePatternEntropy: Double,
 )
 
+@org.springframework.stereotype.Service
 class ScoringService(
     private val config: ScoringConfig = ScoringConfig(),
 ) {

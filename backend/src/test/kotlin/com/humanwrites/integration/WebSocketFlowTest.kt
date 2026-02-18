@@ -1,5 +1,7 @@
 package com.humanwrites.integration
 
+import com.humanwrites.domain.session.analysis.AnomalyDetector
+import com.humanwrites.infrastructure.persistence.KeystrokeRepository
 import com.humanwrites.presentation.dto.request.KeystrokeBatchMessage
 import com.humanwrites.presentation.dto.request.KeystrokeEventDto
 import com.humanwrites.presentation.dto.request.SessionStartRequest
@@ -29,13 +31,15 @@ class WebSocketFlowTest :
         // ── Fixtures ──────────────────────────────────────────────────────
 
         lateinit var messagingTemplate: SimpMessagingTemplate
+        lateinit var keystrokeRepository: KeystrokeRepository
         lateinit var handler: SessionWebSocketHandler
         lateinit var userPrincipal: Principal
         lateinit var otherPrincipal: Principal
 
         beforeEach {
             messagingTemplate = mockk(relaxed = true)
-            handler = SessionWebSocketHandler(messagingTemplate)
+            keystrokeRepository = mockk(relaxed = true)
+            handler = SessionWebSocketHandler(messagingTemplate, keystrokeRepository, AnomalyDetector())
             userPrincipal = mockk()
             every { userPrincipal.name } returns "user-alice"
             otherPrincipal = mockk()

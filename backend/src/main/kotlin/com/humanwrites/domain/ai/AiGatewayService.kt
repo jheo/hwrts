@@ -1,8 +1,14 @@
 package com.humanwrites.domain.ai
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.humanwrites.config.AiConfig
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -12,10 +18,14 @@ import java.util.concurrent.atomic.AtomicLong
 class AiGatewayService(
     private val providerRouter: ProviderRouter,
     private val aiConfig: AiConfig,
+    private val objectMapper: ObjectMapper,
 ) {
     private val logger = LoggerFactory.getLogger(AiGatewayService::class.java)
 
-    // Simple in-memory rate limiting per user
+    @Autowired(required = false)
+    private var redisTemplate: StringRedisTemplate? = null
+
+    // In-memory rate limiting fallback when Redis is unavailable
     private val rateLimitMap = ConcurrentHashMap<UUID, RateLimitEntry>()
 
     fun analyzeSpelling(
@@ -30,7 +40,14 @@ class AiGatewayService(
             return emptyList()
         }
 
-        // TODO: Add Redis caching when Redis dependency is available
+        // Check Redis cache
+        val cacheKey = buildCacheKey(text, locale)
+        val cached = getCachedResult(cacheKey)
+        if (cached != null) {
+            logger.debug("Cache hit for AI spelling analysis")
+            return cached
+        }
+
         return try {
             val provider =
                 if (providerName != null) {
@@ -38,7 +55,12 @@ class AiGatewayService(
                 } else {
                     providerRouter.getDefaultProvider()
                 }
-            provider.analyzeSpelling(text, locale)
+            val result = provider.analyzeSpelling(text, locale)
+
+            // Cache the result
+            cacheResult(cacheKey, result)
+
+            result
         } catch (e: Exception) {
             logger.warn(
                 "AI provider failed for spelling analysis, returning empty list: {}",
@@ -48,7 +70,67 @@ class AiGatewayService(
         }
     }
 
-    private fun checkRateLimit(userId: UUID): Boolean {
+    internal fun buildCacheKey(
+        text: String,
+        locale: String,
+    ): String {
+        val input = "$text|$locale"
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
+        return "ai:spelling:$hash"
+    }
+
+    private fun getCachedResult(cacheKey: String): List<ReviewItem>? =
+        try {
+            redisTemplate?.opsForValue()?.get(cacheKey)?.let { json ->
+                objectMapper.readValue<List<ReviewItem>>(json)
+            }
+        } catch (e: Exception) {
+            logger.debug("Redis cache read failed, proceeding without cache: {}", e.message)
+            null
+        }
+
+    private fun cacheResult(
+        cacheKey: String,
+        items: List<ReviewItem>,
+    ) {
+        try {
+            val json = objectMapper.writeValueAsString(items)
+            redisTemplate?.opsForValue()?.set(cacheKey, json, Duration.ofHours(CACHE_TTL_HOURS))
+        } catch (e: Exception) {
+            logger.debug("Redis cache write failed, continuing without cache: {}", e.message)
+        }
+    }
+
+    internal fun checkRateLimit(userId: UUID): Boolean {
+        // Try Redis-based rate limiting first
+        val redisResult = checkRedisRateLimit(userId)
+        if (redisResult != null) {
+            return redisResult
+        }
+
+        // Fallback to in-memory rate limiting
+        return checkInMemoryRateLimit(userId)
+    }
+
+    private fun checkRedisRateLimit(userId: UUID): Boolean? =
+        try {
+            val redis = redisTemplate ?: return null
+            val now = System.currentTimeMillis()
+            val minuteWindow = now / RATE_LIMIT_WINDOW_MS
+            val key = "ratelimit:ai:$userId:$minuteWindow"
+
+            val count = redis.opsForValue().increment(key) ?: return null
+            if (count == 1L) {
+                redis.expire(key, Duration.ofMillis(RATE_LIMIT_WINDOW_MS))
+            }
+            count <= aiConfig.rateLimitPerMinute
+        } catch (e: Exception) {
+            logger.debug("Redis rate limit check failed, falling back to in-memory: {}", e.message)
+            null
+        }
+
+    private fun checkInMemoryRateLimit(userId: UUID): Boolean {
         val now = System.currentTimeMillis()
         val entry =
             rateLimitMap.compute(userId) { _, existing ->
@@ -69,5 +151,6 @@ class AiGatewayService(
 
     companion object {
         private const val RATE_LIMIT_WINDOW_MS = 60_000L
+        private const val CACHE_TTL_HOURS = 24L
     }
 }

@@ -1,6 +1,10 @@
 package com.humanwrites.presentation.websocket
 
+import com.humanwrites.domain.session.analysis.AnomalyDetector
+import com.humanwrites.domain.session.analysis.KeystrokeWindow
+import com.humanwrites.infrastructure.persistence.KeystrokeRepository
 import com.humanwrites.presentation.dto.request.KeystrokeBatchMessage
+import com.humanwrites.presentation.dto.request.KeystrokeEventDto
 import com.humanwrites.presentation.dto.request.SessionStartRequest
 import com.humanwrites.presentation.dto.response.AnomalyAlertMessage
 import com.humanwrites.presentation.dto.response.SessionStartResponse
@@ -17,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap
 @Controller
 class SessionWebSocketHandler(
     private val messagingTemplate: SimpMessagingTemplate,
+    private val keystrokeRepository: KeystrokeRepository,
+    private val anomalyDetector: AnomalyDetector,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val activeSessions = ConcurrentHashMap<UUID, SessionState>()
@@ -27,6 +33,7 @@ class SessionWebSocketHandler(
         val documentId: UUID,
         var totalKeystrokes: Int = 0,
         var anomalyCount: Int = 0,
+        val recentWindows: MutableList<KeystrokeWindow> = mutableListOf(),
     )
 
     @MessageMapping("/session.start")
@@ -71,8 +78,34 @@ class SessionWebSocketHandler(
         state.totalKeystrokes += batch.events.size
         logger.debug("Received {} keystrokes for session {}", batch.events.size, batch.sessionId)
 
-        // TODO: Phase 2-2 integration - pass events to KeystrokeAnalyzer for real-time analysis
-        // TODO: Batch insert into TimescaleDB via Redis buffer
+        // Persist to TimescaleDB
+        keystrokeRepository.batchInsert(batch.sessionId, batch.events)
+
+        // Build a window from this batch for real-time analysis
+        val window = buildWindow(batch.events)
+        if (window != null) {
+            state.recentWindows.add(window)
+        }
+
+        // Run anomaly detection when enough data is available
+        if (state.recentWindows.size >= AnomalyDetector.MIN_WINDOWS_FOR_DETECTION) {
+            val alerts = anomalyDetector.detect(state.recentWindows)
+            if (alerts.isNotEmpty()) {
+                state.anomalyCount += alerts.size
+                for (alert in alerts) {
+                    sendAnomalyAlert(
+                        principal.name,
+                        AnomalyAlertMessage(
+                            sessionId = batch.sessionId,
+                            type = alert.type.name,
+                            severity = alert.severity,
+                            message = alert.message,
+                            confidence = alert.confidence,
+                        ),
+                    )
+                }
+            }
+        }
 
         // Send status update
         messagingTemplate.convertAndSendToUser(
@@ -112,7 +145,6 @@ class SessionWebSocketHandler(
 
     /**
      * Send anomaly alert to specific user.
-     * Called by AnomalyDetector integration (future).
      */
     fun sendAnomalyAlert(
         userId: String,
@@ -122,6 +154,44 @@ class SessionWebSocketHandler(
             userId,
             "/queue/session.anomaly",
             alert,
+        )
+    }
+
+    /**
+     * Build a KeystrokeWindow from a batch of events for real-time analysis.
+     * Returns null if the batch has no keydown events.
+     */
+    internal fun buildWindow(events: List<KeystrokeEventDto>): KeystrokeWindow? {
+        if (events.isEmpty()) return null
+
+        val keydowns = events.filter { it.eventType == "keydown" }
+        if (keydowns.isEmpty()) return null
+
+        val windowStart = events.minOf { it.timestampMs }
+        val windowEnd = events.maxOf { it.timestampMs }
+        val duration = (windowEnd - windowStart).coerceAtLeast(1L)
+
+        // WPM estimate: assume 5 chars per word
+        val typingKeys = keydowns.count { it.keyCategory in listOf("letter", "number", "punct") }
+        val wpm = if (duration > 0) (typingKeys / 5.0) / (duration / 60000.0) else 0.0
+
+        val flightTimes = events.mapNotNull { it.flightTimeMs?.toLong() }
+        val dwellTimes = events.mapNotNull { it.dwellTimeMs }
+
+        val errorCount = keydowns.count { it.keyCategory == "modifier" }
+        val pauseCount = flightTimes.count { it >= 2000L }
+
+        return KeystrokeWindow(
+            windowStart = windowStart,
+            windowEnd = windowEnd,
+            keystrokes = keydowns.size,
+            wpm = wpm,
+            avgFlightTime = if (flightTimes.isNotEmpty()) flightTimes.average() else 0.0,
+            avgDwellTime = if (dwellTimes.isNotEmpty()) dwellTimes.average() else 0.0,
+            errorCount = errorCount,
+            totalKeys = keydowns.size,
+            pauseCount = pauseCount,
+            flightTimes = flightTimes,
         )
     }
 }

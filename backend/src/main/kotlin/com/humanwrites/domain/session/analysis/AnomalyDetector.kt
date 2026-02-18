@@ -1,5 +1,7 @@
 package com.humanwrites.domain.session.analysis
 
+import org.springframework.stereotype.Service
+
 /**
  * Real-time anomaly detection during active writing sessions.
  * Detects suspicious patterns and generates alerts.
@@ -19,6 +21,7 @@ data class AnomalyAlert(
     val details: Map<String, Any>,
 )
 
+@Service
 class AnomalyDetector {
     companion object {
         const val CV_CRITICAL_THRESHOLD = 0.05

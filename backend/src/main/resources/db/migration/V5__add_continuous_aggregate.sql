@@ -6,7 +6,7 @@ CREATE MATERIALIZED VIEW keystroke_stats_5s
 WITH (timescaledb.continuous) AS
 SELECT
     session_id,
-    time_bucket('5 seconds', created_at) AS bucket,
+    time_bucket('5 seconds', time) AS bucket,
     COUNT(*) AS keystroke_count,
     COUNT(*) FILTER (WHERE event_type = 'keydown') AS keydown_count,
     COUNT(*) FILTER (WHERE key_category IN ('letter', 'number')) AS typing_keys,
@@ -16,10 +16,10 @@ SELECT
     MIN(flight_time_ms) FILTER (WHERE flight_time_ms IS NOT NULL) AS min_flight_time,
     MAX(flight_time_ms) FILTER (WHERE flight_time_ms IS NOT NULL) AS max_flight_time,
     STDDEV(flight_time_ms) FILTER (WHERE flight_time_ms IS NOT NULL) AS stddev_flight_time,
-    MIN(created_at) AS window_start,
-    MAX(created_at) AS window_end
+    MIN(time) AS window_start,
+    MAX(time) AS window_end
 FROM keystroke_events
-GROUP BY session_id, time_bucket('5 seconds', created_at)
+GROUP BY session_id, time_bucket('5 seconds', time)
 WITH NO DATA;
 
 -- Auto-refresh policy: refresh every 5 seconds, looking back 1 minute

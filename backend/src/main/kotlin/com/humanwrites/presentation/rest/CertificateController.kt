@@ -1,8 +1,10 @@
 package com.humanwrites.presentation.rest
 
+import com.humanwrites.domain.certificate.CertificateListResponse
 import com.humanwrites.domain.certificate.CertificateResponse
 import com.humanwrites.domain.certificate.CertificateService
 import com.humanwrites.domain.certificate.SignatureService
+import com.humanwrites.domain.certificate.VerificationInfo
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
@@ -25,14 +27,16 @@ data class IssueCertificateRequest(
     val paragraphCount: Int,
     val contentText: String,
     val totalEditTime: String,
-    // Scoring results (passed from client after session analysis)
-    val overallScore: Int,
-    val grade: String,
-    val label: String,
-    val keystrokeDynamicsScore: Int,
-    val typingSpeedVariance: Double,
-    val errorCorrectionRate: Double,
-    val pausePatternEntropy: Double,
+    // Session ID for server-side scoring (preferred)
+    val sessionId: UUID? = null,
+    // Client-provided scoring results (fallback when no session data)
+    val overallScore: Int? = null,
+    val grade: String? = null,
+    val label: String? = null,
+    val keystrokeDynamicsScore: Int? = null,
+    val typingSpeedVariance: Double? = null,
+    val errorCorrectionRate: Double? = null,
+    val pausePatternEntropy: Double? = null,
 )
 
 @Tag(name = "Certificates", description = "인증서 관리 API")
@@ -57,34 +61,49 @@ class CertificateController(
                 paragraphCount = request.paragraphCount,
                 contentText = request.contentText,
                 totalEditTime = request.totalEditTime,
-                overallScore = request.overallScore,
-                grade = request.grade,
-                label = request.label,
-                keystrokeDynamicsScore = request.keystrokeDynamicsScore,
-                typingSpeedVariance = request.typingSpeedVariance,
-                errorCorrectionRate = request.errorCorrectionRate,
-                pausePatternEntropy = request.pausePatternEntropy,
+                sessionId = request.sessionId,
+                clientOverallScore = request.overallScore,
+                clientGrade = request.grade,
+                clientLabel = request.label,
+                clientKeystrokeDynamicsScore = request.keystrokeDynamicsScore,
+                clientTypingSpeedVariance = request.typingSpeedVariance,
+                clientErrorCorrectionRate = request.errorCorrectionRate,
+                clientPausePatternEntropy = request.pausePatternEntropy,
             )
         return ResponseEntity.ok(cert)
     }
 
     @Operation(summary = "내 인증서 목록", description = "현재 사용자의 인증서 목록 조회")
     @GetMapping
-    fun listCertificates(): ResponseEntity<List<Map<String, Any?>>> {
+    fun listCertificates(): ResponseEntity<CertificateListResponse> {
         val userId = currentUserId()
         val certs = certificateService.findByUserId(userId)
         val summaries =
             certs.map { cert ->
-                mapOf(
-                    "id" to cert.id.toString(),
-                    "shortHash" to cert.shortHash,
-                    "grade" to cert.grade,
-                    "overallScore" to cert.overallScore,
-                    "status" to cert.status,
-                    "issuedAt" to cert.issuedAt.toString(),
+                CertificateResponse(
+                    id = cert.id.toString(),
+                    version = cert.version,
+                    shortHash = cert.shortHash,
+                    document = null,
+                    verification =
+                        VerificationInfo(
+                            overallScore = cert.overallScore.toInt(),
+                            grade = cert.grade,
+                            label = cert.label ?: "",
+                            keystrokeDynamics = null,
+                        ),
+                    aiAssistance = null,
+                    meta = null,
+                    status = cert.status,
+                    issuedAt = cert.issuedAt.toString(),
                 )
             }
-        return ResponseEntity.ok(summaries)
+        return ResponseEntity.ok(
+            CertificateListResponse(
+                certificates = summaries,
+                totalCount = summaries.size,
+            ),
+        )
     }
 
     @Operation(summary = "인증서 폐기", description = "인증서를 폐기 (소유자만 가능)")

@@ -1,5 +1,6 @@
 package com.humanwrites.integration
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.humanwrites.config.AiConfig
 import com.humanwrites.domain.ai.AiGatewayService
 import com.humanwrites.domain.ai.AiProvider
@@ -56,7 +57,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 20)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val result = gateway.analyzeSpelling("Helo world", "en", UUID.randomUUID())
 
@@ -84,7 +85,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 20)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val result =
                 gateway.analyzeSpelling("Helo world", "en", UUID.randomUUID(), providerName = "openai")
@@ -108,7 +109,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 20)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val result = gateway.analyzeSpelling("test text", "ko", UUID.randomUUID(), providerName = null)
 
@@ -132,7 +133,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 20)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val result = gateway.analyzeSpelling("text", "en", UUID.randomUUID())
 
@@ -146,7 +147,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 20)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val result = gateway.analyzeSpelling("text", "en", UUID.randomUUID())
 
@@ -161,7 +162,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 20)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val result =
                 gateway.analyzeSpelling("text", "en", UUID.randomUUID(), providerName = "unknown")
@@ -185,7 +186,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 3)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
             val userId = UUID.randomUUID()
 
             val r1 = gateway.analyzeSpelling("t1", "en", userId)
@@ -211,7 +212,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 2)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
             val userId = UUID.randomUUID()
 
             gateway.analyzeSpelling("t1", "en", userId)
@@ -235,7 +236,7 @@ class AiGatewayIntegrationTest :
                 }
 
             val config = AiConfig(defaultProvider = "claude", rateLimitPerMinute = 1)
-            val gateway = AiGatewayService(router, config)
+            val gateway = AiGatewayService(router, config, jacksonObjectMapper())
 
             val user1 = UUID.randomUUID()
             val user2 = UUID.randomUUID()
