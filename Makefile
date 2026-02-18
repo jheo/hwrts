@@ -1,4 +1,4 @@
-.PHONY: dev dev-frontend dev-backend build build-frontend build-backend test test-frontend test-backend lint lint-frontend lint-backend clean infra-up infra-down infra-reset openapi-generate type-check help
+.PHONY: dev dev-frontend dev-backend build build-frontend build-backend test test-frontend test-backend lint lint-frontend lint-backend clean infra-up infra-down infra-reset schema-generate client-generate openapi-generate type-check help
 
 # =============================================================================
 # Development
@@ -65,12 +65,23 @@ infra-reset:  ## Reset Docker containers (delete volumes)
 # OpenAPI Pipeline
 # =============================================================================
 
-openapi-generate:  ## Generate API client from OpenAPI schema
-	cd backend && ./gradlew bootRun &
-	sleep 10
-	curl -o schema/openapi.yaml http://localhost:8080/api-docs.yaml
+schema-generate:  ## Generate OpenAPI schema from running backend
+	@echo "Starting backend server..."
+	@cd backend && ./gradlew bootRun &
+	@echo "Waiting for server to start..."
+	@for i in $$(seq 1 30); do \
+		curl -s http://localhost:8080/actuator/health > /dev/null 2>&1 && break; \
+		sleep 1; \
+	done
+	@mkdir -p schema
+	curl -s http://localhost:8080/api-docs.yaml -o schema/openapi.yaml
+	@echo "Schema saved to schema/openapi.yaml"
+	@kill %1 2>/dev/null || true
+
+client-generate:  ## Generate TypeScript client from OpenAPI schema
 	cd frontend && pnpm --filter @humanwrites/api-client generate
-	kill %1 2>/dev/null || true
+
+openapi-generate: schema-generate client-generate  ## Full OpenAPI pipeline: schema + client
 
 # =============================================================================
 # Clean

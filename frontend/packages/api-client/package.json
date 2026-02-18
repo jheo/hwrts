@@ -9,15 +9,26 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./generated/*": {
+      "types": "./src/generated/*.ts",
+      "default": "./src/generated/*.ts"
     }
   },
   "scripts": {
+    "generate": "orval --config ../../orval.config.ts",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist src/generated"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "eslint": "^9.20.0"
+    "@types/node": "25.2.3",
+    "eslint": "^9.20.0",
+    "orval": "^8.4.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "axios": "^1.13.5"
   }
 }

@@ -24,7 +24,7 @@
 | Phase 1-3 | Week 3 | 에디터 UX (단락 포커스, 테마, 자동 저장) | [phase-1-3-editor-ux.md](./phase-1-3-editor-ux.md) | ✅ |
 | Phase 1-4 | Week 4 | Inspector 패널 + 문서 통계 | [phase-1-4-inspector.md](./phase-1-4-inspector.md) | ✅ |
 | Phase 1-5 | Week 5 | 키스트로크 수집 + 파일럿 검증 | [phase-1-5-keystroke.md](./phase-1-5-keystroke.md) | ✅ |
-| Phase 2-1 | Week 6 | Spring Boot REST API + Google OAuth | [phase-2-1-backend-api.md](./phase-2-1-backend-api.md) | ⬜ |
+| Phase 2-1 | Week 6 | Spring Boot REST API + Google OAuth | [phase-2-1-backend-api.md](./phase-2-1-backend-api.md) | ✅ |
 | Phase 2-2 | Week 7 | OpenAPI 파이프라인 + 키스트로크 분석 알고리즘 | [phase-2-2-certification.md](./phase-2-2-certification.md) | ⬜ |
 | Phase 2-3 | Week 8 | 인증서 (Ed25519) + 검증 페이지 | [phase-2-3-certificate-ui.md](./phase-2-3-certificate-ui.md) | ⬜ |
 | Phase 2-4 | Week 9 | AI 맞춤법 검사 + 인라인 피드백 | [phase-2-4-ai-assist.md](./phase-2-4-ai-assist.md) | ⬜ |

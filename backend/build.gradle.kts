@@ -118,3 +118,12 @@ spotless {
         ktlint("1.5.0")
     }
 }
+
+// OpenAPI schema generation task
+tasks.register("generateOpenApiDocs") {
+    description = "Generate OpenAPI schema (requires running server)"
+    group = "documentation"
+    doLast {
+        println("Run 'make openapi-generate' to generate the OpenAPI schema with a running server")
+    }
+}

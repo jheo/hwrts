@@ -35,6 +35,8 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers("/.well-known/**")
                     .permitAll()
+                    .requestMatchers("/ws/**")
+                    .permitAll()
                     .anyRequest()
                     .authenticated()
             }.oauth2Login { oauth2 ->

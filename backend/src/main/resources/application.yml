@@ -36,3 +36,12 @@ app:
     refresh-token-expiry: 604800000  # 7 days in ms
     cookie-domain: ${COOKIE_DOMAIN:localhost}
     secure-cookie: ${SECURE_COOKIE:false}
+  scoring:
+    cv-min: 0.15
+    cv-max: 0.60
+    entropy-min: 3.0
+    error-rate-min: 0.03
+    error-rate-max: 0.20
+    thinking-pause-min: 0.5
+    thinking-pause-max: 8.0
+    certified-threshold: 60
