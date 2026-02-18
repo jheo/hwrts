@@ -398,10 +398,16 @@ Spring Boot (Kotlin DTO) → SpringDoc → openapi.yaml → orval → TypeScript
 
 ## 테스트 규칙
 
+### 커버리지 기준 (필수)
+- **Frontend**: 단위 테스트 커버리지 **70% 이상** 필수. 가능한 모든 기능에 대해 E2E 테스트를 수행한다.
+- **Backend**: 단위 테스트 커버리지 **70% 이상** 필수.
+- 각 Phase 개발 완료 전 반드시 커버리지 기준을 달성해야 한다.
+
 **Frontend** (`npm run test:unit` / `test:integration` / `test:e2e`):
 - 타이핑 분석: 경계값 + IME 테스트 (한글 조합 상태 포함)
 - 에디터 상태: 일관성 검증 (이벤트 순서, 텍스트 동기화)
 - 인증서 발행: 전 과정 자동화 (E2E), 접근성: Axe-core
+- E2E: Playwright로 가능한 모든 사용자 시나리오 테스트
 
 **Backend** (`./gradlew test`):
 - 키스트로크 분석: 통계 정확도, 이상 탐지 임계값
@@ -473,6 +479,10 @@ interface SessionData {
    - 각 Phase 종료 전, 해당 단계의 검증 기준(`phase-X-Y-*.md`의 "검증 기준" 섹션)을 하나씩 체크한다.
    - 빌드, 타입 체크, 린트, 테스트를 반복 실행하여 에러 0을 확인한다.
    - 검증 실패 시 수정 → 재검증을 통과할 때까지 반복한다. 통과하지 못하면 단계를 완료로 표시하지 않는다.
+
+4. **진행 상태 업데이트 (DEVELOPMENT_OVERVIEW.md)**
+   - 각 Phase 단계가 완료되면 `docs/DEVELOPMENT_OVERVIEW.md`의 "단계별 요약표"에서 해당 단계의 상태를 `⬜`에서 `✅`로 변경한다.
+   - 검증 기준을 모두 통과하고 커밋/푸시까지 완료된 후에만 체크한다.
 
 ### 빌드 오케스트레이션
 
