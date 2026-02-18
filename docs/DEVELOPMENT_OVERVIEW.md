@@ -108,3 +108,34 @@ Phase 1-1 (셋업)
 
 **프론트엔드**: `tsc --noEmit` 에러 0 / ESLint 에러 0 / Vitest 100% 통과 / 커버리지 80%+
 **백엔드**: `./gradlew compileKotlin` 에러 0 / ktlint 에러 0 / Kotest 100% 통과 / JaCoCo 80%+
+
+---
+
+## Post-MVP 작업
+
+MVP 10주 (Phase 1-1 ~ Phase 2-5) 완료 후 아래 작업을 수행한다:
+
+### 1. 기획 리뷰 세션
+- 기획자 에이전트를 병렬 실행하여 현재 개발 상황을 리뷰
+- Post-MVP 이터레이션(Iter 1~6+)에서 추가 구현할 기능 정리
+- 우선순위 결정 및 2주 단위 이터레이션 계획 수립
+
+### 2. 문서 정비
+- README.md: 설치 및 실행 방법 (완료)
+- docs/USER_MANUAL.md: 사용법 메뉴얼 (완료)
+- docs/ARCHITECTURE.md: 코드 기반 아키텍처 문서 (완료)
+
+### 3. 테스트 커버리지 강화
+- 단위 테스트, 통합 테스트, E2E 테스트를 반복적으로 보강
+- 프론트엔드 / 백엔드 모두 최대 커버리지 목표
+
+### 4. Post-MVP 이터레이션 (2주 단위)
+
+| 이터레이션 | 기간 | 주요 기능 |
+|-----------|------|----------|
+| Iter 1 | 2주 | Focus Mode Deep/Zen, Typewriter Mode |
+| Iter 2 | 2주 | Layer 2 (편집 패턴 분석), 6등급 체계 |
+| Iter 3 | 2주 | Layer 3 (콘텐츠 무결성), DistilBERT ML |
+| Iter 4 | 2주 | 클라우드 동기화, 다중 문서, 내보내기 |
+| Iter 5 | 2주 | GitHub/Apple OAuth, 모바일 반응형 |
+| Iter 6+ | 계속 | 팩트 체크, 스타일 제안, AI 요약 |

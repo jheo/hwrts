@@ -92,6 +92,12 @@ export function useOfflineBuffer<T>(
   const [isFlushing, setIsFlushing] = useState(false);
   const isFlushingRef = useRef(false);
 
+  // Ref that always holds the latest events so flush() never reads a stale
+  // closure.  Updated eagerly inside the setEvents updater (synchronous) and
+  // kept in sync on every render as a safety net.
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
+
   // Keep localStorage in sync whenever events change
   useEffect(() => {
     if (persistenceKey) {
@@ -105,25 +111,30 @@ export function useOfflineBuffer<T>(
 
   const flush = useCallback(async () => {
     if (isFlushingRef.current) return;
-    if (events.length === 0) return;
+    const currentEvents = eventsRef.current;
+    if (currentEvents.length === 0) return;
 
     isFlushingRef.current = true;
     setIsFlushing(true);
 
     // Snapshot current events so new arrivals during flush are not lost
-    const toFlush = [...events];
+    const toFlush = [...currentEvents];
 
     try {
       await onFlush(toFlush);
       // Only clear the events that were successfully flushed
-      setEvents((prev) => prev.slice(toFlush.length));
+      setEvents((prev) => {
+        const next = prev.slice(toFlush.length);
+        eventsRef.current = next;
+        return next;
+      });
     } catch {
       // Flush failed — keep events in buffer, will retry on next online event
     } finally {
       isFlushingRef.current = false;
       setIsFlushing(false);
     }
-  }, [events, onFlush]);
+  }, [onFlush]);
 
   // Auto-flush when coming back online
   useEffect(() => {
@@ -141,8 +152,11 @@ export function useOfflineBuffer<T>(
         const next = [...prev, event];
         // Enforce max buffer size by dropping oldest events
         if (next.length > maxBufferSize) {
-          return next.slice(next.length - maxBufferSize);
+          const trimmed = next.slice(next.length - maxBufferSize);
+          eventsRef.current = trimmed;
+          return trimmed;
         }
+        eventsRef.current = next;
         return next;
       });
 
@@ -156,6 +170,7 @@ export function useOfflineBuffer<T>(
 
   const clear = useCallback(() => {
     setEvents([]);
+    eventsRef.current = [];
     if (persistenceKey) {
       clearStorage(persistenceKey);
     }

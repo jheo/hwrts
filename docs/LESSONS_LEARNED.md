@@ -147,3 +147,15 @@ _(특별한 시행착오 없이 완료)_
 - **문제**: `startIssuance()`가 `handleOpenChange` 내부에서만 호출됨. `open={true}`로 초기 렌더링 시 Radix Dialog가 `onOpenChange`를 호출하지 않아 `onIssue`가 실행되지 않음.
 - **해결**: `useEffect`로 `open` 상태 감시, `open=true`일 때 자동으로 `onIssue` 호출. `useRef`로 중복 실행 방지.
 
+---
+
+## Post-MVP: 테스트 커버리지 강화
+
+### 1. vi.unstubAllGlobals()와 React cleanup 경합 (useDocumentStats)
+- **문제**: `afterEach`에서 `vi.unstubAllGlobals()`를 호출하면 `requestIdleCallback`/`cancelIdleCallback` 스텁이 제거됨. 그러나 React의 `useEffect` cleanup은 테스트 종료 후 비동기로 실행되어, cleanup에서 `cancelIdleCallback(idleId)`를 호출할 때 함수가 이미 존재하지 않아 `ReferenceError` 발생.
+- **해결**: `setup.ts`에 `requestIdleCallback`/`cancelIdleCallback` 폴리필을 추가하여 테스트 라이프사이클 전체에서 항상 사용 가능하도록 함. 개별 테스트의 `vi.stubGlobal`은 이 폴리필을 오버라이드하고, `unstubAllGlobals` 후에도 폴리필이 유지됨.
+
+### 2. React useState 클로저 스테일 문제 (useOfflineBuffer)
+- **문제**: `buffer()` 함수 내에서 `setEvents(...)` 후 즉시 `void flush()`를 호출하지만, `flush`는 `useCallback`의 클로저에서 이전 렌더의 `events`(빈 배열)를 참조하여 `events.length === 0`으로 조기 반환됨. React의 배치 업데이트로 인해 `setEvents`는 상태를 즉시 반영하지 않음.
+- **해결**: `eventsRef`를 추가하고, `setEvents` 업데이터 함수 내부에서 ref를 즉시 갱신. `flush()`는 `events` 클로저 대신 `eventsRef.current`를 읽어 항상 최신 이벤트를 참조. `flush`의 의존성 배열에서 `events` 제거.
+
