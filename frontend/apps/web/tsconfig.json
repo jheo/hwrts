@@ -1,0 +1,61 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@humanwrites/ui": [
+        "../../packages/ui/src"
+      ],
+      "@humanwrites/ui/*": [
+        "../../packages/ui/src/*"
+      ],
+      "@humanwrites/core": [
+        "../../packages/core/src"
+      ],
+      "@humanwrites/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@humanwrites/editor-react": [
+        "../../packages/editor-react/src"
+      ],
+      "@humanwrites/editor-react/*": [
+        "../../packages/editor-react/src/*"
+      ],
+      "@humanwrites/api-client": [
+        "../../packages/api-client/src"
+      ],
+      "@humanwrites/api-client/*": [
+        "../../packages/api-client/src/*"
+      ],
+      "@humanwrites/realtime": [
+        "../../packages/realtime/src"
+      ],
+      "@humanwrites/realtime/*": [
+        "../../packages/realtime/src/*"
+      ]
+    },
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "jsx": "preserve"
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}

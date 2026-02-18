@@ -1,0 +1,35 @@
+{
+  "name": "@humanwrites/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings 0",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@humanwrites/api-client": "workspace:*",
+    "@humanwrites/core": "workspace:*",
+    "@humanwrites/editor-react": "workspace:*",
+    "@humanwrites/realtime": "workspace:*",
+    "@humanwrites/ui": "workspace:*",
+    "@tanstack/react-query": "^5.66.0",
+    "framer-motion": "^12.4.0",
+    "lucide-react": "^0.474.0",
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "25.2.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.20.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}

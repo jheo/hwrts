@@ -1,0 +1,88 @@
+@import './typography.css';
+
+:root {
+  /* SURFACE */
+  --surface-primary: #ffffff;
+  --surface-secondary: #fafafa;
+  --surface-tertiary: #f5f3ef;
+  --surface-certificate: #fafaf8;
+  --surface-overlay: #00000066;
+  --surface-code: #1a1a1a;
+
+  /* TEXT */
+  --text-primary: #000000;
+  --text-body: #767676;
+  --text-active: #000000;
+  --text-secondary: #666666;
+  --text-tertiary: #6b6b6b;
+  --text-quaternary: #767676;
+  --text-disabled: #cccccc;
+
+  /* BORDER */
+  --border-primary: #e0e0e0;
+  --border-certificate: #e8e4de;
+
+  /* REVIEW */
+  --review-spelling-bg: #fef3c7;
+  --review-spelling-text: #92400e;
+  --review-fact-bg: #fee2e2;
+  --review-fact-text: #991b1b;
+  --review-style-bg: #e0e7ff;
+  --review-style-text: #3730a3;
+
+  /* ACCENT */
+  --accent-verified: #22c55e;
+  --accent-primary: #000000;
+  --accent-primary-text: #ffffff;
+
+  /* TYPOGRAPHY */
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* SPACING */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* EDITOR LAYOUT */
+  --editor-max-width: 640px;
+  --editor-padding-top: 100px;
+  --editor-padding-horizontal: 160px;
+  --editor-paragraph-gap: 32px;
+  --inspector-width: 360px;
+}
+
+[data-theme='dark'] {
+  --surface-primary: #0a0a0a;
+  --surface-secondary: #141414;
+  --surface-tertiary: #1a1a1a;
+  --surface-certificate: #111111;
+  --surface-overlay: #00000099;
+  --surface-code: #0d0d0d;
+
+  --text-primary: #ffffff;
+  --text-body: #737373;
+  --text-active: #e0e0e0;
+  --text-secondary: #888888;
+  --text-tertiary: #666666;
+  --text-quaternary: #444444;
+  --text-disabled: #333333;
+
+  --border-primary: #222222;
+  --border-certificate: #2a2520;
+
+  --review-spelling-bg: #422006;
+  --review-spelling-text: #fde68a;
+  --review-fact-bg: #450a0a;
+  --review-fact-text: #fca5a5;
+  --review-style-bg: #1e1b4b;
+  --review-style-text: #a5b4fc;
+
+  --accent-verified: #22c55e;
+  --accent-primary: #ffffff;
+  --accent-primary-text: #000000;
+}
