@@ -12,14 +12,14 @@ describe('createExtensions', () => {
   it('includes all expected extensions', () => {
     const extensions = createExtensions();
 
-    // StarterKit, Link, ParagraphFocus, FocusMode, Placeholder
-    expect(extensions.length).toBe(5);
+    // StarterKit, Link, ParagraphFocus, FocusMode, TypingCollector, Placeholder
+    expect(extensions.length).toBe(6);
   });
 
   it('accepts custom placeholder text', () => {
     const extensions = createExtensions({ placeholder: 'Custom placeholder' });
     expect(Array.isArray(extensions)).toBe(true);
-    expect(extensions.length).toBe(5);
+    expect(extensions.length).toBe(6);
   });
 
   it('uses default Korean placeholder when none provided', () => {

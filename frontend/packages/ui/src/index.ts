@@ -6,6 +6,7 @@ export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './atom
 export { cn } from './lib/cn';
 
 // Molecules
+export { RecordingIndicator } from './molecules/RecordingIndicator/RecordingIndicator';
 export { StatItem } from './molecules/StatItem/StatItem';
 
 // Organisms
