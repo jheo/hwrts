@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8080';

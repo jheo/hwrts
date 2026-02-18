@@ -28,7 +28,7 @@
 | Phase 2-2 | Week 7 | OpenAPI 파이프라인 + 키스트로크 분석 알고리즘 | [phase-2-2-certification.md](./phase-2-2-certification.md) | ✅ |
 | Phase 2-3 | Week 8 | 인증서 (Ed25519) + 검증 페이지 | [phase-2-3-certificate-ui.md](./phase-2-3-certificate-ui.md) | ✅ |
 | Phase 2-4 | Week 9 | AI 맞춤법 검사 + 인라인 피드백 | [phase-2-4-ai-assist.md](./phase-2-4-ai-assist.md) | ✅ |
-| Phase 2-5 | Week 10 | 통합 테스트 + 성능 최적화 | [phase-2-5-integration.md](./phase-2-5-integration.md) | ⬜ |
+| Phase 2-5 | Week 10 | 통합 테스트 + 성능 최적화 | [phase-2-5-integration.md](./phase-2-5-integration.md) | ✅ |
 
 ---
 

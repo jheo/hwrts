@@ -1,10 +1,10 @@
 'use client';
 
-import type { Command } from '@tiptap/react';
-import { Extension } from '@tiptap/react';
 import type { Transaction } from '@tiptap/pm/state';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import type { Command } from '@tiptap/react';
+import { Extension } from '@tiptap/react';
 
 // ---------------------------------------------------------------------------
 // Public types

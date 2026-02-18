@@ -123,3 +123,27 @@ _(특별한 시행착오 없이 완료)_
 - **문제**: 프론트엔드 2개 에이전트가 동시에 작업할 때, 한 에이전트의 pnpm install이 다른 에이전트의 type-check를 실패시킴.
 - **해결**: 최종 통합 검증을 별도로 수행. 에이전트 간 공유 파일(package.json, pnpm-lock.yaml)이 있으면 순차 실행 고려.
 
+---
+
+## Phase 2-5: 통합 테스트 + 성능 최적화
+
+### 1. SessionWebSocketHandler.handleSessionEnd 소유권 검증 전 삭제 버그
+- **문제**: `activeSessions.remove(sessionId)` 후 소유권 검증 → 다른 사용자가 세션을 삭제할 수 있음. remove가 먼저 실행되므로 원래 소유자도 세션 접근 불가.
+- **해결**: `activeSessions[sessionId]`로 먼저 조회하고 소유권 검증 통과 후에만 `remove` 호출.
+
+### 2. ScoringService 빈 메트릭에 부분 점수 부여
+- **문제**: `KeystrokeAnalyzer.analyze(emptyList())`가 모든 값이 0인 메트릭을 반환. `rangeScore()`가 0에 대해서도 부분 점수를 계산하여 overallScore ≈ 40 반환 (0이 아님).
+- **해결**: `ScoringService.score()`에 early return 추가 — avgWpm, flightTimeEntropy, typingSpeedCV가 모두 0이면 즉시 score=0, "Not Certified" 반환.
+
+### 3. 통합 테스트 humanWindow 엔트로피/일시정지 빈도 불일치
+- **문제**: humanWindow가 매 윈도우 동일한 flightTimes 패턴을 반복 → Shannon 엔트로피가 낮음. pauseCount가 5초 윈도우 대비 과도(2~5) → thinkingPauseFrequency가 40/분으로 범위 초과.
+- **해결**: seed 파라미터로 윈도우마다 다른 flightTimes 생성. pauseCount를 0~2 범위로 조정. WPM 분산도 확대 (CV > 0.15).
+
+### 4. MockK slot vs list 캡처
+- **문제**: `slot<T>()`는 단일 값만 캡처 가능. `verify(atLeast = 1)`과 함께 사용하면 여러 호출이 있을 때 MockKException 발생.
+- **해결**: 여러 호출 캡처 시 `mutableListOf<T>()`와 `capture(list)` 사용, `list.last()`로 최종 값 확인.
+
+### 5. CertificateModal useEffect 누락
+- **문제**: `startIssuance()`가 `handleOpenChange` 내부에서만 호출됨. `open={true}`로 초기 렌더링 시 Radix Dialog가 `onOpenChange`를 호출하지 않아 `onIssue`가 실행되지 않음.
+- **해결**: `useEffect`로 `open` 상태 감시, `open=true`일 때 자동으로 `onIssue` 호출. `useRef`로 중복 실행 방지.
+

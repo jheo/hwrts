@@ -36,6 +36,16 @@ class ScoringService(
      * MVP: binary grading (Certified / Not Certified).
      */
     fun score(metrics: KeystrokeMetrics): ScoringResult {
+        // No data → cannot certify
+        if (metrics.avgWpm == 0.0 && metrics.flightTimeEntropy == 0.0 && metrics.typingSpeedCV == 0.0) {
+            return ScoringResult(
+                overallScore = 0,
+                grade = "Not Certified",
+                label = "No typing data",
+                keystrokeDynamics = KeystrokeDynamicsScore(0, 0.0, 0.0, 0.0),
+            )
+        }
+
         // Individual dimension scores (0-100 each)
         val cvScore = rangeScore(metrics.typingSpeedCV, config.cvMin, config.cvMax)
         val entropyScore = thresholdScore(metrics.flightTimeEntropy, config.entropyMin, maxExpected = 6.0)

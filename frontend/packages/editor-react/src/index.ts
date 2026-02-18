@@ -26,3 +26,8 @@ export { useTypingMetrics } from './hooks/useTypingMetrics';
 export type { TypingMetrics, UseTypingMetricsReturn } from './hooks/useTypingMetrics';
 export { useAiFeedback } from './hooks/useAiFeedback';
 export type { UseAiFeedbackOptions, UseAiFeedbackReturn } from './hooks/useAiFeedback';
+export { useConnectionStatus } from './hooks/useConnectionStatus';
+export type { ConnectionStatus, UseConnectionStatusOptions } from './hooks/useConnectionStatus';
+export { WS_CONNECT_EVENT, WS_DISCONNECT_EVENT } from './hooks/useConnectionStatus';
+export { useOfflineBuffer } from './hooks/useOfflineBuffer';
+export type { UseOfflineBufferOptions, UseOfflineBufferReturn } from './hooks/useOfflineBuffer';

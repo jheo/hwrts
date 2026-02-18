@@ -92,8 +92,9 @@ class SessionWebSocketHandler(
         @Payload sessionId: UUID,
         principal: Principal,
     ) {
-        val state = activeSessions.remove(sessionId) ?: return
+        val state = activeSessions[sessionId] ?: return
         if (state.userId != principal.name) return
+        activeSessions.remove(sessionId)
 
         logger.info("Session ended: {} (keystrokes: {})", sessionId, state.totalKeystrokes)
 

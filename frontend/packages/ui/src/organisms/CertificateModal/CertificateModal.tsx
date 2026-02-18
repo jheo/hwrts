@@ -2,7 +2,7 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export type CertificateStep = 'analyzing' | 'review' | 'signing' | 'complete';
 
@@ -204,33 +204,32 @@ export function CertificateModal({
 }: CertificateModalProps) {
   const [step, setStep] = useState<CertificateStep>('analyzing');
   const [certData, setCertData] = useState<CertificateData | undefined>(initialData);
+  const issuedRef = useRef(false);
 
-  const startIssuance = async () => {
-    setStep('analyzing');
-    try {
-      const data = await onIssue();
-      setCertData(data);
-      setStep('review');
-
-      if (data.grade === 'Certified') {
-        // Auto-proceed to signing after 2s
-        setTimeout(() => {
-          setStep('signing');
-          // Signing animation for 2s, then complete
-          setTimeout(() => setStep('complete'), 2000);
-        }, 2000);
-      }
-    } catch {
-      onOpenChange(false);
+  useEffect(() => {
+    if (!open) {
+      issuedRef.current = false;
+      return;
     }
-  };
+    if (issuedRef.current) return;
+    issuedRef.current = true;
+
+    setStep('analyzing');
+    setCertData(undefined);
+
+    const doIssue = async () => {
+      try {
+        const data = await onIssue();
+        setCertData(data);
+        setStep('review');
+      } catch {
+        onOpenChange(false);
+      }
+    };
+    void doIssue();
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      setStep('analyzing');
-      setCertData(undefined);
-      void startIssuance();
-    }
     onOpenChange(newOpen);
   };
 

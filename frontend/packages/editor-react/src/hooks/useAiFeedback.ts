@@ -4,7 +4,6 @@ import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ReviewItem } from '../extensions/inline-feedback';
-import { inlineFeedbackPluginKey } from '../extensions/inline-feedback';
 
 // ---------------------------------------------------------------------------
 // Constants

@@ -54,13 +54,13 @@ describe('InspectorHeader', () => {
     expect(onTabChange).toHaveBeenCalledWith('stats');
   });
 
-  it('disables review and summary tabs', () => {
+  it('disables summary tab but not review tab', () => {
     const onTabChange = vi.fn();
     render(<InspectorHeader activeTab="stats" onTabChange={onTabChange} />);
 
     const reviewBtn = screen.getByText('리뷰').closest('button');
     const summaryBtn = screen.getByText('요약').closest('button');
-    expect(reviewBtn).toBeDisabled();
+    expect(reviewBtn).not.toBeDisabled();
     expect(summaryBtn).toBeDisabled();
   });
 });
@@ -134,9 +134,9 @@ describe('StatsTab', () => {
 });
 
 describe('ReviewTab', () => {
-  it('renders placeholder text', () => {
+  it('renders empty state when no items', () => {
     render(<ReviewTab />);
-    expect(screen.getByText('Phase 2에서 활성화')).toBeInTheDocument();
+    expect(screen.getByText('이슈 없음')).toBeInTheDocument();
   });
 });
 
@@ -226,7 +226,7 @@ describe('Inspector', () => {
       />,
     );
 
-    expect(screen.getByText(/맞춤법 및 문법 검사/)).toBeInTheDocument();
+    expect(screen.getByText('이슈 없음')).toBeInTheDocument();
   });
 
   it('renders summary tab content', () => {
