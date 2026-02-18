@@ -11,6 +11,8 @@ import { Moon, Sun } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useCallback, useMemo } from 'react';
 
+import { EditorLayout } from './EditorLayout';
+
 import './editor.css';
 
 const Editor = dynamic(
@@ -100,8 +102,10 @@ export default function EditorPage() {
           }}
         />
 
-        {/* Editor */}
-        <Editor placeholder="글을 쓰기 시작하세요..." autoSaveOptions={autoSaveOptions} />
+        {/* Editor with Inspector */}
+        <Editor placeholder="글을 쓰기 시작하세요..." autoSaveOptions={autoSaveOptions}>
+          <EditorLayout />
+        </Editor>
 
         {/* Save status */}
         <div className="save-status mt-4 text-center">

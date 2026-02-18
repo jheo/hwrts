@@ -14,6 +14,7 @@ export interface EditorProps {
   placeholder?: string;
   onUpdate?: (html: string) => void;
   autoSaveOptions?: AutoSaveOptions;
+  children?: React.ReactNode;
 }
 
 const ALLOWED_TAGS = [
@@ -54,6 +55,7 @@ export function Editor({
   placeholder,
   onUpdate,
   autoSaveOptions,
+  children,
 }: EditorProps) {
   const sanitizedContent = content ? sanitize(content) : undefined;
 
@@ -90,6 +92,7 @@ export function Editor({
   return (
     <EditorProvider editor={editor}>
       <EditorContent editor={editor} />
+      {children}
     </EditorProvider>
   );
 }
