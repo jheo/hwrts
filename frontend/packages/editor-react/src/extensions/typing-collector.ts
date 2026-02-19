@@ -1,39 +1,11 @@
 'use client';
 
+import type { EditEvent, EditType, KeyCategory, KeystrokeEvent } from '@humanwrites/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import { Extension } from '@tiptap/react';
 
-// ---------------------------------------------------------------------------
-// Local type definitions (will be replaced with @humanwrites/core imports)
-// ---------------------------------------------------------------------------
-
-export type KeyCategory =
-  | 'letter'
-  | 'number'
-  | 'punct'
-  | 'modifier'
-  | 'navigation'
-  | 'function'
-  | 'other';
-
-export interface KeystrokeEvent {
-  type: 'keydown' | 'keyup';
-  keyCategory: KeyCategory;
-  timestamp: number;
-  dwellTime?: number;
-  flightTime?: number;
-}
-
-export type EditType = 'insert' | 'delete' | 'replace' | 'cursor_move' | 'paste';
-
-export interface EditEvent {
-  type: EditType;
-  position: { from: number; to: number };
-  contentLength?: number;
-  timestamp: number;
-  source: 'keyboard' | 'paste' | 'ai_suggestion';
-}
+export type { EditEvent, EditType, KeyCategory, KeystrokeEvent };
 
 /** Callback invoked for every collected keystroke or edit event. */
 export type CollectorCallback = (event: KeystrokeEvent | EditEvent) => void;
