@@ -60,7 +60,12 @@ class KeystrokeAnalyzer {
 
         // Flight time entropy across all windows
         val allFlightTimes = windows.flatMap { it.flightTimes }
-        val flightTimeEntropy = calculateShannonEntropy(allFlightTimes, bucketSize = 50)
+        val flightTimeEntropy =
+            if (allFlightTimes.size >= 10) {
+                calculateShannonEntropy(allFlightTimes, bucketSize = 50)
+            } else {
+                -1.0 // Insufficient data sentinel
+            }
 
         // Error correction rate
         val totalErrors = windows.sumOf { it.errorCount }
@@ -85,7 +90,12 @@ class KeystrokeAnalyzer {
             }
         val pauseTime = pauseDurations.sum().toDouble()
         val burstTime = totalTime - pauseTime
-        val burstPauseRatio = if (pauseTime > 0) burstTime / pauseTime else burstTime
+        val burstPauseRatio =
+            when {
+                pauseTime > 0 && burstTime > 0 -> burstTime / pauseTime
+                pauseTime == 0.0 && burstTime > 0 -> burstTime // No pauses - use burst time directly
+                else -> 0.0
+            }
 
         // Fatigue slope (linear regression of WPM over time)
         val fatigueSlope = calculateFatigueSlope(windows)

@@ -18,6 +18,7 @@ export function calculateShannonEntropy(values: number[]): number {
   const buckets = new Array<number>(bucketCount).fill(0);
 
   for (const v of values) {
+    if (v < 0) continue;  // Skip negative values
     const idx = Math.min(Math.floor(v / BUCKET_SIZE_MS), bucketCount - 1);
     buckets[idx]!++;
   }

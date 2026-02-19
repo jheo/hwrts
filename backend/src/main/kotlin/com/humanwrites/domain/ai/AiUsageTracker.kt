@@ -3,6 +3,8 @@ package com.humanwrites.domain.ai
 import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 @Service
 class AiUsageTracker {
@@ -15,10 +17,8 @@ class AiUsageTracker {
         model: String,
     ) {
         val data = usageMap.getOrPut(documentId) { MutableUsageData() }
-        data.totalSuggestions += count
-        if (!data.featuresUsed.contains("spelling")) {
-            data.featuresUsed.add("spelling")
-        }
+        data.totalSuggestions.addAndGet(count)
+        data.featuresUsed.addIfAbsent("spelling")
     }
 
     fun recordAcceptance(
@@ -26,18 +26,20 @@ class AiUsageTracker {
         count: Int,
     ) {
         val data = usageMap.getOrPut(documentId) { MutableUsageData() }
-        data.suggestionsAccepted += count
+        data.suggestionsAccepted.addAndGet(count)
     }
 
     fun getAiUsageData(documentId: UUID): AiUsageData {
         val data = usageMap[documentId]
         return if (data != null) {
+            val total = data.totalSuggestions.get()
+            val accepted = data.suggestionsAccepted.get()
             AiUsageData(
-                enabled = data.totalSuggestions > 0,
+                enabled = total > 0,
                 featuresUsed = data.featuresUsed.toList(),
-                suggestionsAccepted = data.suggestionsAccepted,
-                suggestionsRejected = data.totalSuggestions - data.suggestionsAccepted,
-                totalSuggestions = data.totalSuggestions,
+                suggestionsAccepted = accepted,
+                suggestionsRejected = total - accepted,
+                totalSuggestions = total,
             )
         } else {
             AiUsageData()
@@ -45,9 +47,9 @@ class AiUsageTracker {
     }
 
     private class MutableUsageData(
-        val featuresUsed: MutableList<String> = mutableListOf(),
-        var suggestionsAccepted: Int = 0,
-        var totalSuggestions: Int = 0,
+        val featuresUsed: CopyOnWriteArrayList<String> = CopyOnWriteArrayList(),
+        val suggestionsAccepted: AtomicInteger = AtomicInteger(0),
+        val totalSuggestions: AtomicInteger = AtomicInteger(0),
     )
 }
 

@@ -22,7 +22,9 @@ data class AnomalyAlert(
 )
 
 @Service
-class AnomalyDetector {
+class AnomalyDetector(
+    private val keystrokeAnalyzer: KeystrokeAnalyzer,
+) {
     companion object {
         const val CV_CRITICAL_THRESHOLD = 0.05
         const val ENTROPY_CRITICAL_THRESHOLD = 2.0
@@ -82,8 +84,7 @@ class AnomalyDetector {
         val allFlightTimes = windows.flatMap { it.flightTimes }
         if (allFlightTimes.size < 20) return null
 
-        val analyzer = KeystrokeAnalyzer()
-        val entropy = analyzer.calculateShannonEntropy(allFlightTimes, bucketSize = 50)
+        val entropy = keystrokeAnalyzer.calculateShannonEntropy(allFlightTimes, bucketSize = 50)
 
         return if (entropy < ENTROPY_CRITICAL_THRESHOLD) {
             AnomalyAlert(

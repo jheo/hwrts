@@ -3,6 +3,7 @@ package com.humanwrites.infrastructure.security
 import com.humanwrites.config.JwtConfig
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.Date
 import java.util.UUID
@@ -12,6 +13,8 @@ import javax.crypto.SecretKey
 class JwtTokenProvider(
     private val jwtConfig: JwtConfig,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     private val key: SecretKey by lazy {
         Keys.hmacShaKeyFor(jwtConfig.secret.toByteArray())
     }
@@ -49,7 +52,17 @@ class JwtTokenProvider(
                     .build()
                     .parseSignedClaims(token)
             UUID.fromString(claims.payload.subject)
-        } catch (_: Exception) {
+        } catch (e: io.jsonwebtoken.ExpiredJwtException) {
+            logger.debug("Expired JWT token")
+            null
+        } catch (e: io.jsonwebtoken.security.SecurityException) {
+            logger.warn("JWT signature validation failed: {}", e.message)
+            null
+        } catch (e: io.jsonwebtoken.MalformedJwtException) {
+            logger.warn("Malformed JWT token: {}", e.message)
+            null
+        } catch (e: Exception) {
+            logger.error("Unexpected JWT validation error: {}", e.message)
             null
         }
 

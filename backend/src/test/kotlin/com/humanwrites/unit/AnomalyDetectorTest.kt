@@ -2,6 +2,7 @@ package com.humanwrites.unit
 
 import com.humanwrites.domain.session.analysis.AnomalyDetector
 import com.humanwrites.domain.session.analysis.AnomalyType
+import com.humanwrites.domain.session.analysis.KeystrokeAnalyzer
 import com.humanwrites.domain.session.analysis.KeystrokeWindow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -11,7 +12,7 @@ import io.kotest.matchers.shouldBe
 class AnomalyDetectorTest :
     FunSpec({
 
-        val detector = AnomalyDetector()
+        val detector = AnomalyDetector(KeystrokeAnalyzer())
 
         fun normalWindows(): List<KeystrokeWindow> =
             listOf(

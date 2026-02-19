@@ -136,6 +136,7 @@ export function useAiFeedback(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text }),
           signal: controller.signal,
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -234,6 +235,7 @@ export function useAiFeedback(
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+      lastCheckedTextRef.current = null;  // Reset on editor change
     };
   }, [editor, enabled, debounceMs, fetchFeedback]);
 

@@ -1,6 +1,7 @@
 package com.humanwrites.integration
 
 import com.humanwrites.domain.session.analysis.AnomalyDetector
+import com.humanwrites.domain.session.analysis.KeystrokeAnalyzer
 import com.humanwrites.infrastructure.persistence.KeystrokeRepository
 import com.humanwrites.presentation.dto.request.KeystrokeBatchMessage
 import com.humanwrites.presentation.dto.request.KeystrokeEventDto
@@ -39,7 +40,7 @@ class WebSocketFlowTest :
         beforeEach {
             messagingTemplate = mockk(relaxed = true)
             keystrokeRepository = mockk(relaxed = true)
-            handler = SessionWebSocketHandler(messagingTemplate, keystrokeRepository, AnomalyDetector())
+            handler = SessionWebSocketHandler(messagingTemplate, keystrokeRepository, AnomalyDetector(KeystrokeAnalyzer()))
             userPrincipal = mockk()
             every { userPrincipal.name } returns "user-alice"
             otherPrincipal = mockk()
@@ -325,22 +326,17 @@ class WebSocketFlowTest :
 
         // ── Edge cases ────────────────────────────────────────────────────
 
-        test("keystroke batch with empty events list is accepted and sends status") {
+        test("keystroke batch with empty events list is silently ignored") {
             val sessionId = startSession()
             clearMocks(messagingTemplate, answers = false)
 
             val emptyBatch = KeystrokeBatchMessage(sessionId = sessionId, events = emptyList())
             handler.handleKeystrokeBatch(emptyBatch, userPrincipal)
 
-            val statusSlot = slot<SessionStatusMessage>()
-            verify(exactly = 1) {
-                messagingTemplate.convertAndSendToUser(
-                    eq("user-alice"),
-                    eq("/queue/session.status"),
-                    capture(statusSlot),
-                )
+            // Empty batch returns early after validation — no status message sent
+            verify(exactly = 0) {
+                messagingTemplate.convertAndSendToUser(any(), any(), any())
             }
-            statusSlot.captured.totalKeystrokes shouldBe 0
         }
 
         test("batch for unknown session is silently ignored") {

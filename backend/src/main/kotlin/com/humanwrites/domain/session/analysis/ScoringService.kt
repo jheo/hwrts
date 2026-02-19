@@ -49,7 +49,12 @@ class ScoringService(
 
         // Individual dimension scores (0-100 each)
         val cvScore = rangeScore(metrics.typingSpeedCV, config.cvMin, config.cvMax)
-        val entropyScore = thresholdScore(metrics.flightTimeEntropy, config.entropyMin, maxExpected = 6.0)
+        val entropyScore =
+            if (metrics.flightTimeEntropy < 0) {
+                50.0 // Neutral score when insufficient flight time data
+            } else {
+                thresholdScore(metrics.flightTimeEntropy, config.entropyMin, maxExpected = 6.0)
+            }
         val errorScore = rangeScore(metrics.errorCorrectionRate, config.errorRateMin, config.errorRateMax)
         val pauseScore = rangeScore(metrics.thinkingPauseFrequency, config.thinkingPauseMin, config.thinkingPauseMax)
         val fatigueScore = fatigueScore(metrics.fatigueSlope)
@@ -98,6 +103,7 @@ class ScoringService(
         min: Double,
         max: Double,
     ): Double {
+        if (min >= max) return if (value == min) 100.0 else 0.0
         if (value in min..max) return 100.0
         val halfRange = (max - min) / 2
         val distance = if (value < min) min - value else value - max
@@ -136,6 +142,7 @@ class ScoringService(
      */
     internal fun burstPauseScore(ratio: Double): Double =
         when {
+            ratio.isNaN() || ratio.isInfinite() -> 20.0 // Suspicious: no natural pattern
             ratio in 2.0..10.0 -> 100.0
             ratio in 1.0..2.0 -> 70.0
             ratio in 10.0..20.0 -> 60.0

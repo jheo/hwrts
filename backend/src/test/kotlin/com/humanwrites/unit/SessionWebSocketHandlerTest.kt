@@ -1,6 +1,7 @@
 package com.humanwrites.unit
 
 import com.humanwrites.domain.session.analysis.AnomalyDetector
+import com.humanwrites.domain.session.analysis.KeystrokeAnalyzer
 import com.humanwrites.infrastructure.persistence.KeystrokeRepository
 import com.humanwrites.presentation.dto.request.KeystrokeBatchMessage
 import com.humanwrites.presentation.dto.request.KeystrokeEventDto
@@ -30,7 +31,7 @@ class SessionWebSocketHandlerTest :
         beforeEach {
             messagingTemplate = mockk(relaxed = true)
             keystrokeRepository = mockk(relaxed = true)
-            anomalyDetector = AnomalyDetector()
+            anomalyDetector = AnomalyDetector(KeystrokeAnalyzer())
             handler = SessionWebSocketHandler(messagingTemplate, keystrokeRepository, anomalyDetector)
             principal = mockk()
             every { principal.name } returns "user-123"

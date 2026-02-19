@@ -7,6 +7,8 @@ import com.humanwrites.domain.certificate.SignatureService
 import com.humanwrites.domain.certificate.VerificationInfo
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Size
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
@@ -21,10 +23,13 @@ import java.util.UUID
 
 data class IssueCertificateRequest(
     val documentId: UUID,
+    @field:Size(max = 500)
     val documentTitle: String,
+    @field:Size(max = 200)
     val authorName: String,
     val wordCount: Int,
     val paragraphCount: Int,
+    @field:Size(max = 5_000_000)
     val contentText: String,
     val totalEditTime: String,
     val sessionId: UUID, // Required — server always computes scores from session data
@@ -39,7 +44,7 @@ class CertificateController(
     @Operation(summary = "인증서 발행", description = "새 Human Written 인증서를 발행")
     @PostMapping
     fun issueCertificate(
-        @RequestBody request: IssueCertificateRequest,
+        @Valid @RequestBody request: IssueCertificateRequest,
     ): ResponseEntity<CertificateResponse> {
         val userId = currentUserId()
         val cert =

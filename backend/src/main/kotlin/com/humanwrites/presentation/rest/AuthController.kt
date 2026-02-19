@@ -61,11 +61,15 @@ class AuthController(
         @Valid @RequestBody req: LoginRequest,
         response: HttpServletResponse,
     ): ResponseEntity<AuthResponse> {
-        val user =
-            userService.findByEmail(req.email)
-                ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val user = userService.findByEmail(req.email)
 
-        if (user.passwordHash == null || !passwordEncoder.matches(req.password, user.passwordHash)) {
+        // Always perform password comparison to prevent timing attacks
+        val dummyHash =
+            "\$argon2id\$v=19\$m=16384,t=2,p=1\$aaaaaaaaaaaaaaaa\$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        val passwordHash = user?.passwordHash ?: dummyHash
+        val matches = passwordEncoder.matches(req.password, passwordHash)
+
+        if (user == null || !matches) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
