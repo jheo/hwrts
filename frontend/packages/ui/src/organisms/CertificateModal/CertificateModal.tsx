@@ -1,7 +1,6 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
@@ -287,11 +286,9 @@ export function CertificateModal({
               {step === 'signing' && 'Signing Certificate'}
               {step === 'complete' && 'Certificate Issued'}
             </Dialog.Title>
-            <VisuallyHidden>
-              <Dialog.Description>
-                Human Written certification analysis and issuance dialog
-              </Dialog.Description>
-            </VisuallyHidden>
+            <Dialog.Description className="sr-only">
+              Human Written certification analysis and issuance dialog
+            </Dialog.Description>
 
             <AnimatePresence mode="wait">
               <motion.div

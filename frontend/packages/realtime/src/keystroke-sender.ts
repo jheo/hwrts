@@ -1,8 +1,10 @@
+import type { KeystrokeEvent as CoreKeystrokeEvent } from '@humanwrites/core';
 import type { KeyCategory } from '@humanwrites/core';
 
 import type { StompClientManager } from './stomp-client.js';
 
-export interface KeystrokeEvent {
+/** Wire-format event matching backend `KeystrokeEventDto` field names. */
+export interface WireKeystrokeEvent {
   eventType: 'keydown' | 'keyup';
   keyCategory: KeyCategory;
   timestampMs: number;
@@ -10,10 +12,25 @@ export interface KeystrokeEvent {
   flightTimeMs?: number;
 }
 
+/**
+ * Convert a core `KeystrokeEvent` to the backend wire format.
+ * Core uses semantic names (`type`, `timestamp`), backend expects
+ * explicit names with unit suffixes (`eventType`, `timestampMs`).
+ */
+export function toWireFormat(event: CoreKeystrokeEvent): WireKeystrokeEvent {
+  return {
+    eventType: event.type,
+    keyCategory: event.keyCategory,
+    timestampMs: event.timestamp,
+    dwellTimeMs: event.dwellTime,
+    flightTimeMs: event.flightTime,
+  };
+}
+
 export class KeystrokeSender {
   private readonly client: StompClientManager;
   private readonly sessionId: string;
-  private buffer: KeystrokeEvent[] = [];
+  private buffer: WireKeystrokeEvent[] = [];
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private readonly BATCH_INTERVAL_MS = 200;
 
@@ -22,8 +39,9 @@ export class KeystrokeSender {
     this.sessionId = sessionId;
   }
 
-  addEvents(events: KeystrokeEvent[]): void {
-    this.buffer.push(...events);
+  /** Accept core KeystrokeEvents (auto-converts) or pre-mapped WireKeystrokeEvents. */
+  addEvents(events: CoreKeystrokeEvent[]): void {
+    this.buffer.push(...events.map(toWireFormat));
   }
 
   start(): void {
