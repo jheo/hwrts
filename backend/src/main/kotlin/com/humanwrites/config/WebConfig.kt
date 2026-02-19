@@ -17,5 +17,10 @@ class WebConfig(
             .allowedHeaders("*")
             .allowCredentials(true) // for httpOnly cookies
             .maxAge(3600)
+        registry
+            .addMapping("/.well-known/**")
+            .allowedOrigins("*")
+            .allowedMethods("GET")
+            .maxAge(86400)
     }
 }

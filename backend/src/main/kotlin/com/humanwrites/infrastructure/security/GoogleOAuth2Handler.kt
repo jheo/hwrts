@@ -3,6 +3,7 @@ package com.humanwrites.infrastructure.security
 import com.humanwrites.domain.user.UserService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
@@ -13,6 +14,7 @@ class GoogleOAuth2Handler(
     private val userService: UserService,
     private val jwtTokenProvider: JwtTokenProvider,
     private val cookieUtils: CookieUtils,
+    @Value("\${app.cors.allowed-origins:http://localhost:3000}") private val allowedOrigins: String,
 ) : AuthenticationSuccessHandler {
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -46,6 +48,7 @@ class GoogleOAuth2Handler(
         cookieUtils.addAccessTokenCookie(response, accessToken)
         cookieUtils.addRefreshTokenCookie(response, refreshToken)
 
-        response.sendRedirect("http://localhost:3000/editor")
+        val frontendUrl = allowedOrigins.split(",").first().trim()
+        response.sendRedirect("$frontendUrl/editor")
     }
 }

@@ -52,7 +52,7 @@ class AiController(
     @Operation(summary = "제안 수락 기록", description = "AI 제안 수락 횟수 기록")
     @PostMapping("/suggestions/accept")
     fun acceptSuggestions(
-        @RequestBody request: AcceptSuggestionsRequest,
+        @Valid @RequestBody request: AcceptSuggestionsRequest,
     ): ResponseEntity<Map<String, String>> {
         aiUsageTracker.recordAcceptance(request.documentId, request.count)
         return ResponseEntity.ok(mapOf("status" to "recorded"))

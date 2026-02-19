@@ -6,6 +6,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReviewItem } from '../extensions/inline-feedback';
 
 // ---------------------------------------------------------------------------
+// Helpers (locale)
+// ---------------------------------------------------------------------------
+
+/** Simple locale detection: Korean chars present → 'ko', otherwise 'en'. */
+function detectLocale(text: string): string {
+  return /[\u3131-\u3163\uac00-\ud7a3]/.test(text) ? 'ko' : 'en';
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -23,6 +32,10 @@ export interface UseAiFeedbackOptions {
   debounceMs?: number;
   /** Override API endpoint for testing (default: '/api/ai/spelling'). */
   apiEndpoint?: string;
+  /** Document ID to include in AI feedback requests. */
+  documentId?: string;
+  /** Locale override ('ko' | 'en'). Auto-detected if not provided. */
+  locale?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,6 +118,8 @@ export function useAiFeedback(
   const enabled = options?.enabled ?? true;
   const debounceMs = options?.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   const apiEndpoint = options?.apiEndpoint ?? API_ENDPOINT;
+  const documentId = options?.documentId;
+  const locale = options?.locale;
 
   const [isLoading, setIsLoading] = useState(false);
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
@@ -134,7 +149,11 @@ export function useAiFeedback(
         const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({
+            text,
+            locale: locale ?? detectLocale(text),
+            documentId,
+          }),
           signal: controller.signal,
           credentials: 'include',
         });
@@ -200,7 +219,7 @@ export function useAiFeedback(
         }
       }
     },
-    [editor, apiEndpoint],
+    [editor, apiEndpoint, documentId, locale],
   );
 
   // ---- Debounced trigger on editor updates --------------------------------

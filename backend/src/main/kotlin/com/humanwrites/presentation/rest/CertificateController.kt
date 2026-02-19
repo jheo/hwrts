@@ -5,9 +5,12 @@ import com.humanwrites.domain.certificate.CertificateResponse
 import com.humanwrites.domain.certificate.CertificateService
 import com.humanwrites.domain.certificate.SignatureService
 import com.humanwrites.domain.certificate.VerificationInfo
+import com.humanwrites.domain.document.DocumentService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.Size
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -27,8 +30,8 @@ data class IssueCertificateRequest(
     val documentTitle: String,
     @field:Size(max = 200)
     val authorName: String,
-    val wordCount: Int,
-    val paragraphCount: Int,
+    @field:Min(0) @field:Max(1_000_000) val wordCount: Int,
+    @field:Min(0) @field:Max(100_000) val paragraphCount: Int,
     @field:Size(max = 5_000_000)
     val contentText: String,
     val totalEditTime: String,
@@ -40,6 +43,7 @@ data class IssueCertificateRequest(
 @RequestMapping("/api/certificates")
 class CertificateController(
     private val certificateService: CertificateService,
+    private val documentService: DocumentService,
 ) {
     @Operation(summary = "인증서 발행", description = "새 Human Written 인증서를 발행")
     @PostMapping
@@ -47,6 +51,10 @@ class CertificateController(
         @Valid @RequestBody request: IssueCertificateRequest,
     ): ResponseEntity<CertificateResponse> {
         val userId = currentUserId()
+        val doc =
+            documentService.findById(request.documentId)
+                ?: return ResponseEntity.notFound().build()
+        if (doc.userId != userId) return ResponseEntity.status(403).build()
         val cert =
             certificateService.issueCertificate(
                 documentId = request.documentId,
