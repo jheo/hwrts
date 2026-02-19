@@ -35,9 +35,10 @@ class DocumentController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<DocumentListResponse> {
+        val clampedPage = page.coerceAtLeast(0)
         val clampedSize = size.coerceIn(1, 100)
         val userId = currentUserId()
-        val documents = documentService.findByUserId(userId, page, clampedSize)
+        val documents = documentService.findByUserId(userId, clampedPage, clampedSize)
         val totalCount = documentService.countByUserId(userId)
 
         return ResponseEntity.ok(

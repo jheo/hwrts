@@ -29,6 +29,11 @@ class SessionWebSocketHandler(
     private val logger = LoggerFactory.getLogger(javaClass)
     private val activeSessions = ConcurrentHashMap<UUID, SessionState>()
 
+    companion object {
+        /** Maximum events per STOMP keystroke batch to prevent DoS. */
+        const val MAX_BATCH_SIZE = 500
+    }
+
     @PostConstruct
     fun init() {
         logger.info("SessionWebSocketHandler initialized. Note: active sessions are in-memory and will be lost on restart.")
@@ -88,6 +93,12 @@ class SessionWebSocketHandler(
         // Verify ownership
         if (state.userId != principal.name) {
             logger.warn("User {} tried to send to session {}", principal.name, batch.sessionId)
+            return
+        }
+
+        // Limit batch size to prevent DoS
+        if (batch.events.size > MAX_BATCH_SIZE) {
+            logger.warn("Batch size {} exceeds limit {} for session {}", batch.events.size, MAX_BATCH_SIZE, batch.sessionId)
             return
         }
 

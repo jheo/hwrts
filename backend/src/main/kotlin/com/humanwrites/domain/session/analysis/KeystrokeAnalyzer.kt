@@ -8,7 +8,6 @@ import kotlin.math.sqrt
  * Layer 1 keystroke dynamics analysis engine.
  * Calculates human-likeness metrics from typing patterns.
  */
-@Component
 data class KeystrokeMetrics(
     val avgWpm: Double,
     val wpmVariance: Double,
@@ -34,6 +33,7 @@ data class KeystrokeWindow(
     val flightTimes: List<Long>,
 )
 
+@Component
 class KeystrokeAnalyzer {
     companion object {
         const val DEFAULT_CV_MIN = 0.15
