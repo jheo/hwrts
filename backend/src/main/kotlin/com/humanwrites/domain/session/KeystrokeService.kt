@@ -75,7 +75,7 @@ class KeystrokeServiceImpl(
         val flightTimes = events.mapNotNull { it.flightTimeMs?.toLong() }
         val dwellTimes = events.mapNotNull { it.dwellTimeMs }
 
-        val errorCount = keydowns.count { it.keyCategory == "modifier" }
+        val errorCount = keydowns.count { it.keyCategory == "navigation" }
         val pauseCount = flightTimes.count { it >= 2000L }
 
         return KeystrokeWindow(

@@ -6,10 +6,11 @@ import com.humanwrites.config.AiConfig
 import com.humanwrites.domain.ai.AiGatewayService
 import com.humanwrites.domain.ai.AiProvider
 import com.humanwrites.domain.ai.ProviderRouter
+import com.humanwrites.domain.ai.RateLimitExceededException
 import com.humanwrites.domain.ai.ReviewItem
 import com.humanwrites.domain.ai.TextRange
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -65,8 +66,9 @@ class RedisRateLimiterTest :
             result3 shouldHaveSize 1
 
             // Fourth request exceeds the limit
-            val result4 = service.analyzeSpelling("text4", "en", userId)
-            result4.shouldBeEmpty()
+            shouldThrow<RateLimitExceededException> {
+                service.analyzeSpelling("text4", "en", userId)
+            }
         }
 
         test("fallback: different users have independent rate limits") {
@@ -76,8 +78,9 @@ class RedisRateLimiterTest :
 
             // Exhaust userA's limit
             repeat(3) { service.analyzeSpelling("text$it", "en", userA) }
-            val userAExceeded = service.analyzeSpelling("extra", "en", userA)
-            userAExceeded.shouldBeEmpty()
+            shouldThrow<RateLimitExceededException> {
+                service.analyzeSpelling("extra", "en", userA)
+            }
 
             // userB should still be allowed
             val userBResult = service.analyzeSpelling("text", "en", userB)

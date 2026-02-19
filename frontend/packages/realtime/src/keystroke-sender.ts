@@ -1,11 +1,13 @@
+import type { KeyCategory } from '@humanwrites/core';
+
 import type { StompClientManager } from './stomp-client.js';
 
 export interface KeystrokeEvent {
-  type: 'keydown' | 'keyup';
-  keyCategory: 'letter' | 'number' | 'punct' | 'modifier';
-  timestamp: number;
-  dwellTime?: number;
-  flightTime?: number;
+  eventType: 'keydown' | 'keyup';
+  keyCategory: KeyCategory;
+  timestampMs: number;
+  dwellTimeMs?: number;
+  flightTimeMs?: number;
 }
 
 export class KeystrokeSender {

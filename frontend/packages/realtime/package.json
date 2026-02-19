@@ -22,6 +22,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@humanwrites/core": "workspace:*",
     "@stomp/stompjs": "^7.3.0"
   }
 }

@@ -17,7 +17,6 @@ import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
-import kotlin.math.abs
 
 @Service
 class CertificateService(
@@ -26,7 +25,7 @@ class CertificateService(
     private val aiUsageTracker: AiUsageTracker,
     private val scoringService: ScoringService,
     private val keystrokeAnalyzer: KeystrokeAnalyzer,
-    private val keystrokeService: KeystrokeService?,
+    private val keystrokeService: KeystrokeService,
 ) {
     private val logger = LoggerFactory.getLogger(CertificateService::class.java)
 
@@ -39,27 +38,17 @@ class CertificateService(
         paragraphCount: Int,
         contentText: String,
         totalEditTime: String,
-        sessionId: UUID? = null,
-        clientOverallScore: Int? = null,
-        clientGrade: String? = null,
-        clientLabel: String? = null,
-        clientKeystrokeDynamicsScore: Int? = null,
-        clientTypingSpeedVariance: Double? = null,
-        clientErrorCorrectionRate: Double? = null,
-        clientPausePatternEntropy: Double? = null,
+        sessionId: UUID,
     ): CertificateResponse {
-        // Resolve scoring: prefer server-side, fall back to client-provided
-        val resolved =
-            resolveScoring(
-                sessionId = sessionId,
-                clientOverallScore = clientOverallScore,
-                clientGrade = clientGrade,
-                clientLabel = clientLabel,
-                clientKeystrokeDynamicsScore = clientKeystrokeDynamicsScore,
-                clientTypingSpeedVariance = clientTypingSpeedVariance,
-                clientErrorCorrectionRate = clientErrorCorrectionRate,
-                clientPausePatternEntropy = clientPausePatternEntropy,
+        // Server-side scoring only (no client fallback)
+        val windows = keystrokeService.getKeystrokeWindows(sessionId)
+        if (windows.isEmpty()) {
+            throw IllegalArgumentException(
+                "No keystroke data for session $sessionId. Cannot issue certificate without typing analysis.",
             )
+        }
+        val metrics = keystrokeAnalyzer.analyze(windows)
+        val resolved = scoringService.score(metrics)
 
         val certId = UUID.randomUUID()
         val shortHash = generateShortHash(certId)
@@ -84,10 +73,10 @@ class CertificateService(
                     "label" to resolved.label,
                     "keystrokeDynamics" to
                         mapOf(
-                            "score" to resolved.keystrokeDynamicsScore,
-                            "typingSpeedVariance" to resolved.typingSpeedVariance,
-                            "errorCorrectionRate" to resolved.errorCorrectionRate,
-                            "pausePatternEntropy" to resolved.pausePatternEntropy,
+                            "score" to resolved.keystrokeDynamics.score,
+                            "typingSpeedVariance" to resolved.keystrokeDynamics.typingSpeedVariance,
+                            "errorCorrectionRate" to resolved.keystrokeDynamics.errorCorrectionRate,
+                            "pausePatternEntropy" to resolved.keystrokeDynamics.pausePatternEntropy,
                         ),
                 ),
             )
@@ -145,10 +134,10 @@ class CertificateService(
                     label = resolved.label,
                     keystrokeDynamics =
                         KeystrokeDynamicsInfo(
-                            score = resolved.keystrokeDynamicsScore,
-                            typingSpeedVariance = resolved.typingSpeedVariance,
-                            errorCorrectionRate = resolved.errorCorrectionRate,
-                            pausePatternEntropy = resolved.pausePatternEntropy,
+                            score = resolved.keystrokeDynamics.score,
+                            typingSpeedVariance = resolved.keystrokeDynamics.typingSpeedVariance,
+                            errorCorrectionRate = resolved.keystrokeDynamics.errorCorrectionRate,
+                            pausePatternEntropy = resolved.keystrokeDynamics.pausePatternEntropy,
                         ),
                 ),
             aiAssistance =
@@ -167,88 +156,6 @@ class CertificateService(
                     signature = signature,
                     publicKeyUrl = "/.well-known/humanwrites-public-key.pem",
                 ),
-        )
-    }
-
-    /**
-     * Resolve scoring using server-side computation when possible,
-     * falling back to client-provided scores during MVP transition.
-     */
-    internal fun resolveScoring(
-        sessionId: UUID?,
-        clientOverallScore: Int?,
-        clientGrade: String?,
-        clientLabel: String?,
-        clientKeystrokeDynamicsScore: Int?,
-        clientTypingSpeedVariance: Double?,
-        clientErrorCorrectionRate: Double?,
-        clientPausePatternEntropy: Double?,
-    ): ResolvedScoring {
-        // Attempt server-side scoring if sessionId is provided
-        if (sessionId != null && keystrokeService != null) {
-            val windows = keystrokeService.getKeystrokeWindows(sessionId)
-            if (windows.isNotEmpty()) {
-                val metrics = keystrokeAnalyzer.analyze(windows)
-                val serverResult = scoringService.score(metrics)
-
-                // Compare with client score if both exist; log warning if they differ
-                if (clientOverallScore != null) {
-                    val diff = abs(serverResult.overallScore - clientOverallScore)
-                    if (diff > 10) {
-                        logger.warn(
-                            "Score mismatch for session {}: server={}, client={}, diff={}",
-                            sessionId,
-                            serverResult.overallScore,
-                            clientOverallScore,
-                            diff,
-                        )
-                    }
-                }
-
-                // Server-computed score is authoritative
-                return ResolvedScoring(
-                    overallScore = serverResult.overallScore,
-                    grade = serverResult.grade,
-                    label = serverResult.label,
-                    keystrokeDynamicsScore = serverResult.keystrokeDynamics.score,
-                    typingSpeedVariance = serverResult.keystrokeDynamics.typingSpeedVariance,
-                    errorCorrectionRate = serverResult.keystrokeDynamics.errorCorrectionRate,
-                    pausePatternEntropy = serverResult.keystrokeDynamics.pausePatternEntropy,
-                    source = ScoringSource.SERVER,
-                )
-            } else {
-                logger.info(
-                    "No keystroke windows found for session {}; falling back to client score",
-                    sessionId,
-                )
-            }
-        }
-
-        // Fallback to client-provided scores
-        if (clientOverallScore != null && clientGrade != null) {
-            return ResolvedScoring(
-                overallScore = clientOverallScore,
-                grade = clientGrade,
-                label = clientLabel ?: "Client-provided score",
-                keystrokeDynamicsScore = clientKeystrokeDynamicsScore ?: 0,
-                typingSpeedVariance = clientTypingSpeedVariance ?: 0.0,
-                errorCorrectionRate = clientErrorCorrectionRate ?: 0.0,
-                pausePatternEntropy = clientPausePatternEntropy ?: 0.0,
-                source = ScoringSource.CLIENT,
-            )
-        }
-
-        // No scoring data available at all
-        logger.warn("No scoring data available: no sessionId and no client scores provided")
-        return ResolvedScoring(
-            overallScore = 0,
-            grade = "Not Certified",
-            label = "No scoring data available",
-            keystrokeDynamicsScore = 0,
-            typingSpeedVariance = 0.0,
-            errorCorrectionRate = 0.0,
-            pausePatternEntropy = 0.0,
-            source = ScoringSource.NONE,
         )
     }
 
@@ -325,23 +232,6 @@ class CertificateService(
             .take(32)
     }
 }
-
-enum class ScoringSource {
-    SERVER,
-    CLIENT,
-    NONE,
-}
-
-data class ResolvedScoring(
-    val overallScore: Int,
-    val grade: String,
-    val label: String,
-    val keystrokeDynamicsScore: Int,
-    val typingSpeedVariance: Double,
-    val errorCorrectionRate: Double,
-    val pausePatternEntropy: Double,
-    val source: ScoringSource,
-)
 
 data class CertificateEntity(
     val id: UUID,

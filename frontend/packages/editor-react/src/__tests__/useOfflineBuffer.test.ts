@@ -190,7 +190,7 @@ describe('useOfflineBuffer', () => {
     });
 
     // Start first flush (won't resolve yet)
-    const flushPromise = act(async () => {
+    const flushPromise = await act(async () => {
       void result.current.flush();
     });
 

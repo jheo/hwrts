@@ -1,5 +1,6 @@
 package com.humanwrites.presentation.rest
 
+import com.humanwrites.domain.ai.RateLimitExceededException
 import com.humanwrites.presentation.dto.response.ErrorResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -12,6 +13,19 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 @RestControllerAdvice
 class GlobalExceptionHandler {
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+
+    @ExceptionHandler(RateLimitExceededException::class)
+    fun handleRateLimit(ex: RateLimitExceededException): ResponseEntity<ErrorResponse> =
+        ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .header("Retry-After", "60")
+            .body(
+                ErrorResponse(
+                    error = "RATE_LIMIT_EXCEEDED",
+                    message = ex.message ?: "Rate limit exceeded",
+                    status = HttpStatus.TOO_MANY_REQUESTS.value(),
+                ),
+            )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {

@@ -19,6 +19,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@humanwrites/core": "workspace:*",
     "@humanwrites/ui": "workspace:*",
     "@tiptap/core": "^3.20.0",
     "@tiptap/extension-link": "^3.20.0",

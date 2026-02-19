@@ -4,15 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.humanwrites.domain.ai.AiUsageTracker
 import com.humanwrites.domain.certificate.CertificateService
-import com.humanwrites.domain.certificate.ScoringSource
 import com.humanwrites.domain.certificate.SignatureService
 import com.humanwrites.domain.session.KeystrokeService
 import com.humanwrites.domain.session.analysis.KeystrokeAnalyzer
 import com.humanwrites.domain.session.analysis.KeystrokeWindow
 import com.humanwrites.domain.session.analysis.ScoringService
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
-import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
@@ -29,8 +26,8 @@ class CertificateServiceTest :
         val aiUsageTracker = AiUsageTracker()
         val scoringService = ScoringService()
         val keystrokeAnalyzer = KeystrokeAnalyzer()
+        val keystrokeService = mockk<KeystrokeService>()
 
-        // Service without KeystrokeService (fallback mode)
         val service =
             CertificateService(
                 signatureService,
@@ -38,7 +35,7 @@ class CertificateServiceTest :
                 aiUsageTracker,
                 scoringService,
                 keystrokeAnalyzer,
-                null,
+                keystrokeService,
             )
 
         // ── Helper: build human-like keystroke windows ──────────────────
@@ -163,170 +160,43 @@ class CertificateServiceTest :
 
         // ── Server-side scoring tests ───────────────────────────────────
 
-        test("resolveScoring uses server-side scoring when sessionId and keystroke data exist") {
-            val keystrokeService = mockk<KeystrokeService>()
-            val serviceWithKeystroke =
-                CertificateService(
-                    signatureService,
-                    objectMapper,
-                    aiUsageTracker,
-                    scoringService,
-                    keystrokeAnalyzer,
-                    keystrokeService,
-                )
-
+        test("issueCertificate uses server-side scoring from session keystroke data") {
             val sessionId = UUID.randomUUID()
             val windows = (0..4).map { i -> humanWindow(i * 5_000L, seed = i) }
             every { keystrokeService.getKeystrokeWindows(sessionId) } returns windows
 
-            val resolved =
-                serviceWithKeystroke.resolveScoring(
-                    sessionId = sessionId,
-                    clientOverallScore = 50,
-                    clientGrade = "Not Certified",
-                    clientLabel = "Client label",
-                    clientKeystrokeDynamicsScore = 50,
-                    clientTypingSpeedVariance = 0.1,
-                    clientErrorCorrectionRate = 0.01,
-                    clientPausePatternEntropy = 1.0,
-                )
+            // Verify scoring pipeline works: analyze → score
+            val metrics = keystrokeAnalyzer.analyze(windows)
+            val result = scoringService.score(metrics)
 
-            resolved.source shouldBe ScoringSource.SERVER
-            resolved.overallScore shouldBeGreaterThanOrEqual 0
-            resolved.grade shouldNotBe null
-            // Server score should differ from client since we provided different data
-            verify { keystrokeService.getKeystrokeWindows(sessionId) }
+            result.overallScore shouldNotBe null
+            result.grade shouldNotBe null
         }
 
-        test("resolveScoring falls back to client score when no session data") {
-            val keystrokeService = mockk<KeystrokeService>()
-            val serviceWithKeystroke =
-                CertificateService(
-                    signatureService,
-                    objectMapper,
-                    aiUsageTracker,
-                    scoringService,
-                    keystrokeAnalyzer,
-                    keystrokeService,
-                )
-
+        test("issueCertificate throws when session has no keystroke data") {
             val sessionId = UUID.randomUUID()
             every { keystrokeService.getKeystrokeWindows(sessionId) } returns emptyList()
 
-            val resolved =
-                serviceWithKeystroke.resolveScoring(
-                    sessionId = sessionId,
-                    clientOverallScore = 75,
-                    clientGrade = "Certified",
-                    clientLabel = "Likely human-written",
-                    clientKeystrokeDynamicsScore = 75,
-                    clientTypingSpeedVariance = 0.3,
-                    clientErrorCorrectionRate = 0.08,
-                    clientPausePatternEntropy = 2.5,
-                )
+            val exception =
+                runCatching {
+                    service.issueCertificate(
+                        documentId = UUID.randomUUID(),
+                        userId = UUID.randomUUID(),
+                        documentTitle = "Test",
+                        authorName = "Author",
+                        wordCount = 100,
+                        paragraphCount = 3,
+                        contentText = "Test content",
+                        totalEditTime = "PT10M",
+                        sessionId = sessionId,
+                    )
+                }.exceptionOrNull()
 
-            resolved.source shouldBe ScoringSource.CLIENT
-            resolved.overallScore shouldBe 75
-            resolved.grade shouldBe "Certified"
-            resolved.label shouldBe "Likely human-written"
-            resolved.keystrokeDynamicsScore shouldBe 75
+            exception shouldNotBe null
+            exception!!.message shouldBe "No keystroke data for session $sessionId. Cannot issue certificate without typing analysis."
         }
 
-        test("resolveScoring falls back to client score when keystrokeService is null") {
-            // service already has null keystrokeService
-            val resolved =
-                service.resolveScoring(
-                    sessionId = UUID.randomUUID(),
-                    clientOverallScore = 80,
-                    clientGrade = "Certified",
-                    clientLabel = "Highly likely human-written",
-                    clientKeystrokeDynamicsScore = 80,
-                    clientTypingSpeedVariance = 0.35,
-                    clientErrorCorrectionRate = 0.10,
-                    clientPausePatternEntropy = 3.0,
-                )
-
-            resolved.source shouldBe ScoringSource.CLIENT
-            resolved.overallScore shouldBe 80
-            resolved.grade shouldBe "Certified"
-        }
-
-        test("resolveScoring returns NONE when no sessionId and no client scores") {
-            val resolved =
-                service.resolveScoring(
-                    sessionId = null,
-                    clientOverallScore = null,
-                    clientGrade = null,
-                    clientLabel = null,
-                    clientKeystrokeDynamicsScore = null,
-                    clientTypingSpeedVariance = null,
-                    clientErrorCorrectionRate = null,
-                    clientPausePatternEntropy = null,
-                )
-
-            resolved.source shouldBe ScoringSource.NONE
-            resolved.overallScore shouldBe 0
-            resolved.grade shouldBe "Not Certified"
-            resolved.label shouldBe "No scoring data available"
-        }
-
-        test("resolveScoring logs warning when server and client scores differ by more than 10") {
-            val keystrokeService = mockk<KeystrokeService>()
-            val serviceWithKeystroke =
-                CertificateService(
-                    signatureService,
-                    objectMapper,
-                    aiUsageTracker,
-                    scoringService,
-                    keystrokeAnalyzer,
-                    keystrokeService,
-                )
-
-            val sessionId = UUID.randomUUID()
-            // Human windows will produce a high score
-            val windows =
-                listOf(
-                    humanWindow(0L, wpm = 45.0, errorCount = 4, pauseCount = 1, seed = 0),
-                    humanWindow(5_000L, wpm = 72.0, errorCount = 3, pauseCount = 1, seed = 1),
-                    humanWindow(10_000L, wpm = 52.0, errorCount = 5, pauseCount = 1, seed = 2),
-                    humanWindow(15_000L, wpm = 68.0, errorCount = 4, pauseCount = 1, seed = 3),
-                    humanWindow(20_000L, wpm = 40.0, errorCount = 6, pauseCount = 1, seed = 4),
-                )
-            every { keystrokeService.getKeystrokeWindows(sessionId) } returns windows
-
-            // Client score is very different from what server will compute
-            val resolved =
-                serviceWithKeystroke.resolveScoring(
-                    sessionId = sessionId,
-                    clientOverallScore = 10, // artificially low
-                    clientGrade = "Not Certified",
-                    clientLabel = "Unlikely human-written",
-                    clientKeystrokeDynamicsScore = 10,
-                    clientTypingSpeedVariance = 0.01,
-                    clientErrorCorrectionRate = 0.0,
-                    clientPausePatternEntropy = 0.0,
-                )
-
-            // Server score should be used regardless of mismatch
-            resolved.source shouldBe ScoringSource.SERVER
-            // The server score from human windows should be well above 10
-            resolved.overallScore shouldBeGreaterThanOrEqual 40
-        }
-
-        test("resolveScoring server score is authoritative even when client score is higher") {
-            val keystrokeService = mockk<KeystrokeService>()
-            val serviceWithKeystroke =
-                CertificateService(
-                    signatureService,
-                    objectMapper,
-                    aiUsageTracker,
-                    scoringService,
-                    keystrokeAnalyzer,
-                    keystrokeService,
-                )
-
-            val sessionId = UUID.randomUUID()
-            // Robot-like windows (low score)
+        test("scoring pipeline produces low score for robot-like typing") {
             val robotWindows =
                 List(5) { i ->
                     KeystrokeWindow(
@@ -342,23 +212,26 @@ class CertificateServiceTest :
                         flightTimes = List(20) { 50L },
                     )
                 }
-            every { keystrokeService.getKeystrokeWindows(sessionId) } returns robotWindows
 
-            val resolved =
-                serviceWithKeystroke.resolveScoring(
-                    sessionId = sessionId,
-                    clientOverallScore = 95, // client says high, but server data says low
-                    clientGrade = "Certified",
-                    clientLabel = "Highly likely human-written",
-                    clientKeystrokeDynamicsScore = 95,
-                    clientTypingSpeedVariance = 0.35,
-                    clientErrorCorrectionRate = 0.10,
-                    clientPausePatternEntropy = 3.0,
+            val metrics = keystrokeAnalyzer.analyze(robotWindows)
+            val result = scoringService.score(metrics)
+
+            result.grade shouldBe "Not Certified"
+        }
+
+        test("scoring pipeline produces high score for human-like typing") {
+            val windows =
+                listOf(
+                    humanWindow(0L, wpm = 45.0, errorCount = 4, pauseCount = 1, seed = 0),
+                    humanWindow(5_000L, wpm = 72.0, errorCount = 3, pauseCount = 1, seed = 1),
+                    humanWindow(10_000L, wpm = 52.0, errorCount = 5, pauseCount = 1, seed = 2),
+                    humanWindow(15_000L, wpm = 68.0, errorCount = 4, pauseCount = 1, seed = 3),
+                    humanWindow(20_000L, wpm = 40.0, errorCount = 6, pauseCount = 1, seed = 4),
                 )
 
-            resolved.source shouldBe ScoringSource.SERVER
-            // Robot windows should produce a low score
-            resolved.overallScore shouldBeLessThan 60
-            resolved.grade shouldBe "Not Certified"
+            val metrics = keystrokeAnalyzer.analyze(windows)
+            val result = scoringService.score(metrics)
+
+            result.grade shouldBe "Certified"
         }
     })

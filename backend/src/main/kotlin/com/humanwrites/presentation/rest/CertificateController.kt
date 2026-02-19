@@ -27,16 +27,7 @@ data class IssueCertificateRequest(
     val paragraphCount: Int,
     val contentText: String,
     val totalEditTime: String,
-    // Session ID for server-side scoring (preferred)
-    val sessionId: UUID? = null,
-    // Client-provided scoring results (fallback when no session data)
-    val overallScore: Int? = null,
-    val grade: String? = null,
-    val label: String? = null,
-    val keystrokeDynamicsScore: Int? = null,
-    val typingSpeedVariance: Double? = null,
-    val errorCorrectionRate: Double? = null,
-    val pausePatternEntropy: Double? = null,
+    val sessionId: UUID, // Required — server always computes scores from session data
 )
 
 @Tag(name = "Certificates", description = "인증서 관리 API")
@@ -62,13 +53,6 @@ class CertificateController(
                 contentText = request.contentText,
                 totalEditTime = request.totalEditTime,
                 sessionId = request.sessionId,
-                clientOverallScore = request.overallScore,
-                clientGrade = request.grade,
-                clientLabel = request.label,
-                clientKeystrokeDynamicsScore = request.keystrokeDynamicsScore,
-                clientTypingSpeedVariance = request.typingSpeedVariance,
-                clientErrorCorrectionRate = request.errorCorrectionRate,
-                clientPausePatternEntropy = request.pausePatternEntropy,
             )
         return ResponseEntity.ok(cert)
     }

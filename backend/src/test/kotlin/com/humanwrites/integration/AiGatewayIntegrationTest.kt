@@ -6,8 +6,10 @@ import com.humanwrites.domain.ai.AiGatewayService
 import com.humanwrites.domain.ai.AiProvider
 import com.humanwrites.domain.ai.AiUsageTracker
 import com.humanwrites.domain.ai.ProviderRouter
+import com.humanwrites.domain.ai.RateLimitExceededException
 import com.humanwrites.domain.ai.ReviewItem
 import com.humanwrites.domain.ai.TextRange
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -217,9 +219,10 @@ class AiGatewayIntegrationTest :
 
             gateway.analyzeSpelling("t1", "en", userId)
             gateway.analyzeSpelling("t2", "en", userId)
-            val rateLimited = gateway.analyzeSpelling("t3", "en", userId)
 
-            rateLimited.shouldBeEmpty()
+            shouldThrow<RateLimitExceededException> {
+                gateway.analyzeSpelling("t3", "en", userId)
+            }
         }
 
         test("rate limiter is per-user: different users have independent limits") {
@@ -243,12 +246,12 @@ class AiGatewayIntegrationTest :
 
             // user1 exhausts their limit
             gateway.analyzeSpelling("t1", "en", user1)
-            val user1Limited = gateway.analyzeSpelling("t2", "en", user1)
+            shouldThrow<RateLimitExceededException> {
+                gateway.analyzeSpelling("t2", "en", user1)
+            }
 
             // user2 should still be allowed
             val user2Result = gateway.analyzeSpelling("t1", "en", user2)
-
-            user1Limited.shouldBeEmpty()
             user2Result shouldHaveSize 1
         }
 

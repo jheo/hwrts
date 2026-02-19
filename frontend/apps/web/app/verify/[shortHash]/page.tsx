@@ -130,8 +130,31 @@ export default async function VerifyPage({
     notFound();
   }
 
-  const verification: VerificationData = JSON.parse(cert.verificationData);
-  const aiUsage: AiUsageData = JSON.parse(cert.aiUsageData);
+  let verification: VerificationData;
+  let aiUsage: AiUsageData;
+  try {
+    verification = JSON.parse(cert.verificationData);
+    aiUsage = JSON.parse(cert.aiUsageData);
+  } catch {
+    verification = {
+      overallScore: cert.overallScore,
+      grade: cert.grade,
+      label: '',
+      keystrokeDynamics: {
+        score: 0,
+        typingSpeedVariance: 0,
+        errorCorrectionRate: 0,
+        pausePatternEntropy: 0,
+      },
+    };
+    aiUsage = {
+      enabled: false,
+      features_used: [],
+      suggestions_accepted: 0,
+      suggestions_rejected: 0,
+      total_suggestions: 0,
+    };
+  }
   const isCertified = cert.grade === 'Certified';
 
   return (

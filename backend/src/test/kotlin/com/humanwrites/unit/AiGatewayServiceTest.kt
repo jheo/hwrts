@@ -6,8 +6,10 @@ import com.humanwrites.config.AiConfig
 import com.humanwrites.domain.ai.AiGatewayService
 import com.humanwrites.domain.ai.AiProvider
 import com.humanwrites.domain.ai.ProviderRouter
+import com.humanwrites.domain.ai.RateLimitExceededException
 import com.humanwrites.domain.ai.ReviewItem
 import com.humanwrites.domain.ai.TextRange
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -88,7 +90,7 @@ class AiGatewayServiceTest :
             result.shouldBeEmpty()
         }
 
-        test("rate limiting: returns empty list after exceeding limit") {
+        test("rate limiting: throws RateLimitExceededException after exceeding limit") {
             val limitedConfig =
                 AiConfig(
                     claudeApiKey = "test-key",
@@ -113,12 +115,14 @@ class AiGatewayServiceTest :
             // First two requests should succeed
             val result1 = service.analyzeSpelling("text1", "en", userId)
             val result2 = service.analyzeSpelling("text2", "en", userId)
-            // Third request should be rate limited
-            val result3 = service.analyzeSpelling("text3", "en", userId)
 
             result1 shouldHaveSize 1
             result2 shouldHaveSize 1
-            result3.shouldBeEmpty()
+
+            // Third request should throw RateLimitExceededException
+            shouldThrow<RateLimitExceededException> {
+                service.analyzeSpelling("text3", "en", userId)
+            }
         }
 
         test("routing: uses specified provider name") {

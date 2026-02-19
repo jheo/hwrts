@@ -6,6 +6,7 @@ import com.humanwrites.config.AiConfig
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.Duration
@@ -37,7 +38,7 @@ class AiGatewayService(
         // Rate limiting check
         if (!checkRateLimit(userId)) {
             logger.warn("Rate limit exceeded for user {}", userId)
-            return emptyList()
+            throw RateLimitExceededException()
         }
 
         // Check Redis cache
@@ -142,6 +143,19 @@ class AiGatewayService(
                 }
             }
         return (entry?.count?.get() ?: 0) <= aiConfig.rateLimitPerMinute
+    }
+
+    @Scheduled(fixedRate = 300_000) // Every 5 minutes
+    fun cleanupExpiredRateLimits() {
+        val now = System.currentTimeMillis()
+        val expired =
+            rateLimitMap.entries
+                .filter { now - it.value.windowStart.get() > RATE_LIMIT_WINDOW_MS * 2 }
+                .map { it.key }
+        expired.forEach { rateLimitMap.remove(it) }
+        if (expired.isNotEmpty()) {
+            logger.debug("Cleaned up {} expired rate limit entries", expired.size)
+        }
     }
 
     private data class RateLimitEntry(

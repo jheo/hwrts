@@ -21,6 +21,9 @@ class SecurityConfig(
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
+            // CSRF disabled: API-only backend with SameSite=Lax cookies + CORS origin restriction.
+            // SPA (Next.js) sends requests via fetch with credentials; no form submissions.
+            // Re-evaluate if adding server-rendered forms or non-API endpoints.
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->

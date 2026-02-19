@@ -9,6 +9,8 @@ import com.humanwrites.presentation.dto.request.SessionStartRequest
 import com.humanwrites.presentation.dto.response.AnomalyAlertMessage
 import com.humanwrites.presentation.dto.response.SessionStartResponse
 import com.humanwrites.presentation.dto.response.SessionStatusMessage
+import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
@@ -26,6 +28,20 @@ class SessionWebSocketHandler(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val activeSessions = ConcurrentHashMap<UUID, SessionState>()
+
+    @PostConstruct
+    fun init() {
+        logger.info("SessionWebSocketHandler initialized. Note: active sessions are in-memory and will be lost on restart.")
+    }
+
+    @PreDestroy
+    fun shutdown() {
+        val count = activeSessions.size
+        if (count > 0) {
+            logger.warn("Server shutting down with {} active writing sessions. These sessions will be lost.", count)
+        }
+        activeSessions.clear()
+    }
 
     data class SessionState(
         val sessionId: UUID,
@@ -178,7 +194,7 @@ class SessionWebSocketHandler(
         val flightTimes = events.mapNotNull { it.flightTimeMs?.toLong() }
         val dwellTimes = events.mapNotNull { it.dwellTimeMs }
 
-        val errorCount = keydowns.count { it.keyCategory == "modifier" }
+        val errorCount = keydowns.count { it.keyCategory == "navigation" }
         val pauseCount = flightTimes.count { it >= 2000L }
 
         return KeystrokeWindow(

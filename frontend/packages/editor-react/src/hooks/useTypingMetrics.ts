@@ -1,35 +1,7 @@
 'use client';
 
+import type { EditEvent, KeystrokeEvent } from '@humanwrites/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-// ---------------------------------------------------------------------------
-// Local type definitions (mirrors typing-collector.ts — will unify later)
-// ---------------------------------------------------------------------------
-
-type KeyCategory =
-  | 'letter'
-  | 'number'
-  | 'punct'
-  | 'modifier'
-  | 'navigation'
-  | 'function'
-  | 'other';
-
-interface KeystrokeEvent {
-  type: 'keydown' | 'keyup';
-  keyCategory: KeyCategory;
-  timestamp: number;
-  dwellTime?: number;
-  flightTime?: number;
-}
-
-interface EditEvent {
-  type: 'insert' | 'delete' | 'replace' | 'cursor_move' | 'paste';
-  position: { from: number; to: number };
-  contentLength?: number;
-  timestamp: number;
-  source: 'keyboard' | 'paste' | 'ai_suggestion';
-}
 
 // ---------------------------------------------------------------------------
 // Public types

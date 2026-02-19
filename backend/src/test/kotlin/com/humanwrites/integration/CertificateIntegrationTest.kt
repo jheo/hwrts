@@ -5,6 +5,7 @@ import com.humanwrites.domain.ai.AiUsageTracker
 import com.humanwrites.domain.certificate.CertificateService
 import com.humanwrites.domain.certificate.CertificateSignPayload
 import com.humanwrites.domain.certificate.SignatureService
+import com.humanwrites.domain.session.KeystrokeService
 import com.humanwrites.domain.session.analysis.KeystrokeAnalyzer
 import com.humanwrites.domain.session.analysis.KeystrokeWindow
 import com.humanwrites.domain.session.analysis.ScoringConfig
@@ -14,6 +15,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldHaveLength
 import io.kotest.matchers.string.shouldNotBeBlank
+import io.mockk.mockk
 import java.util.UUID
 
 /**
@@ -274,7 +276,7 @@ class CertificateIntegrationTest :
                     aiUsageTracker,
                     scoringService,
                     keystrokeAnalyzer,
-                    null,
+                    mockk<KeystrokeService>(),
                 )
             val method =
                 CertificateService::class.java.getDeclaredMethod("generateShortHash", UUID::class.java)
